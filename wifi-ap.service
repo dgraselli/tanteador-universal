@@ -1,0 +1,13 @@
+[Unit]
+Description=WiFi Access Point Setup
+After=multi-user.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-ap-setup.sh
+RemainAfterExit=yes
+User=root
+
+[Install]
+WantedBy=multi-user.target

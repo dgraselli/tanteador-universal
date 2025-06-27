@@ -2,6 +2,10 @@
 
 Proyecto de tanteador electrónico con interfaz gráfica PyQt5 y control remoto inalámbrico basado en ESP8266 (Wemos D1 Mini).
 
+El tanteador fue donado para la cancha de Pelota Paleta del querido Club Uiniversal de La Plata.
+
+Dejo aquí el código del proyecto para quien quiera replicarlo para otros propositos.
+
 ## Características
 
 - Interfaz gráfica a pantalla completa para marcador deportivo, con reloj y sonidos.
@@ -83,6 +87,18 @@ Proyecto de tanteador electrónico con interfaz gráfica PyQt5 y control remoto 
 ## Licencia
 
 Este proyecto está licenciado bajo los términos de la licencia MIT. Consulta el archivo LICENSE para más detalles.
+
+## Fotos
+
+A continuación algunas imágenes del tanteador y su instalación:
+
+<p align="center">
+  <img src="fotos/tanteador.jpg" alt="Tanteador armado" width="400"/>
+  <img src="fotos/tablero.jpg" alt="Tablero electrónico" width="400"/>
+  <img src="fotos/tanteador_instalado.jpg" alt="Tanteador instalado" width="400"/>
+  <img src="fotos/tablero_instalado.jpg" alt="Tablero instalado" width="400"/>
+  <img src="fotos/tanteador_y_tablero.jpg" alt="Tanteador y tablero" width="400"/>
+</p>
 
 ---
 

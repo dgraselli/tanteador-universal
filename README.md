@@ -4,7 +4,7 @@ Proyecto de tanteador electrónico con interfaz gráfica PyQt5 y control remoto 
 
 El tanteador fue donado para la cancha de Pelota Paleta del querido Club Uiniversal de La Plata.
 
-Dejo aquí el código del proyecto para quien quiera replicarlo para otros propositos.
+Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas pelotaris ;)
 
 ## Características
 
@@ -21,7 +21,6 @@ Dejo aquí el código del proyecto para quien quiera replicarlo para otros propo
 .
 ├── tanteador.py                 # Interfaz gráfica principal (PyQt5 + MQTT)
 ├── setup-ap.sh                  # Script para configurar AP WiFi
-├── show_universal.sh            # Script de utilidad
 ├── wifi-ap.service              # Servicio systemd para AP
 ├── esp8266/
 │   └── tanteador_remoto_LOLIN/  # Firmware del control remoto (ESP8266)
@@ -34,10 +33,26 @@ Dejo aquí el código del proyecto para quien quiera replicarlo para otros propo
 │   ├── universal/               # Sonidos para tema universal
 │   └── universal-dark/          # Sonidos para tema universal oscuro
 ├── SDCARD/                      # Imágenes de SD (opcional)
-└── test.py                      # Script de prueba
 ```
 
-## Requisitos
+## Requerimientos
+
+Para el tablero: 
+
+- Placa Raspberry Pi Zero 4Gb
+- Monitor de 19'
+- Parlantes usb
+- Adaptardor mniHdmi-Hdmi y cable
+- Bastidor de melaina y policarbonato compacto 10mm.
+
+Para el control remoto:
+- Placa ESP8266 (Wemos D1 Mini) (alternativa Node32)
+- 3 Botones pulsadores
+- 1 boton push con retencion
+- Caja estanco
+
+
+## Librerias
 
 - Python 3.x
 - PyQt5
@@ -45,7 +60,6 @@ Dejo aquí el código del proyecto para quien quiera replicarlo para otros propo
 - aplay (Linux, para reproducir sonidos)
 - Fuentes digitales instaladas en el sistema (DS-Digital, Dimitri, etc)
 - Broker MQTT (ej: Mosquitto)
-- Placa ESP8266 (Wemos D1 Mini) para control remoto
 
 ## Instalación
 
@@ -82,7 +96,7 @@ Dejo aquí el código del proyecto para quien quiera replicarlo para otros propo
 ## Créditos
 
 - Proyecto y scripts: Diego Graselli (CHACA)
-- Sonidos y fuentes: ver carpetas correspondientes
+- Monitor donado por Carlos Aristegui
 
 ## Licencia
 
@@ -99,6 +113,23 @@ A continuación algunas imágenes del tanteador y su instalación:
   <img src="fotos/tablero_instalado.jpg" alt="Tablero instalado" width="400"/>
   <img src="fotos/tanteador_y_tablero.jpg" alt="Tanteador y tablero" width="400"/>
 </p>
+
+## Oros aspectos técnicos
+
+Se utilizo un monitor de 19'
+
+El bastidor fue realizado con melamina 18mm color negro.
+
+12 cm fue la profundidad minima que pude lograr quitando la base del monitor.
+
+El alto y ancho es 2cm por lado a partir de las medidas del monitor.
+
+Para el frente se utilizo policarbonato compacto de 10mm, material resistente a impactos y 100% transparente.
+(6mm es suficiente)
+
+El policarbonato se atornillo con arandelas de goma por la parte posterior para mitigar el impacto de la pelota.
+Tambien se puso goma entre el bastidor y el muro.
+
 
 ---
 

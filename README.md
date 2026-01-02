@@ -97,6 +97,7 @@ Para el control remoto:
 
 - Proyecto y scripts: Diego Graselli (CHACA)
 - Monitor donado por Carlos Aristegui
+- Cables y protector de tension donado por Roberto Carlos Laguarta (RCL)
 
 ## Licencia
 

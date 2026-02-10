@@ -4,6 +4,10 @@ Proyecto de tanteador electrónico con interfaz gráfica PyQt5 y control remoto 
 
 El tanteador fue donado para la cancha de Pelota Paleta del querido Club Uiniversal de La Plata.
 
+<p align="center">
+  <img src="fotos/logo.png" alt="QR" width="100"/>
+</p>
+
 Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas pelotaris ;)
 
 ## Características
@@ -99,9 +103,15 @@ Para el control remoto:
 - Monitor donado por Carlos Aristegui
 - Cables y protector de tension donado por Roberto Carlos Laguarta (RCL)
 
+
 ## Licencia
 
 Este proyecto está licenciado bajo los términos de la licencia MIT. Consulta el archivo LICENSE para más detalles.
+
+Pegar el siguitente QR luego de utilizar, para que otras personas puedan copiarlo.
+<p align="center">
+  <img src="fotos/qr.png" alt="QR" width="200"/>
+</p>
 
 ## Fotos
 

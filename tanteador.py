@@ -12,6 +12,11 @@ from PyQt5.QtCore import Qt, QTimer, QPoint, pyqtSignal
 import paho.mqtt.client as mqtt
 import os
 
+# Segundos que un equipo tiene que esperar entre una suma y la siguiente.
+# Subilo a 2 si todavía se cuela algún doble; bajalo si alguna vez bloquea un
+# punto legítimo (no debería: entre tanto y tanto siempre pasan varios segundos).
+COOLDOWN_PUNTO = 1.5
+
 # Definición de temas parametrizados
 THEMES = {
     'universal': {
@@ -62,6 +67,11 @@ class TanteadorWidget(QWidget):
         self.scores = {'local': 0, 'visita': 0, 'ultimo': None}
         self.theme = 'universal-dark'
         self.last_reset = time.time()
+        # Anti doble-punto: si el mismo equipo suma dos veces en menos de
+        # COOLDOWN_PUNTO segundos, la segunda se ignora. En pelota no hay dos
+        # tantos tan seguidos, así que esto solo tapa el doble apretón del botón.
+        # Las restas nunca se limitan: una corrección tiene que entrar siempre.
+        self.last_up = {'local': 0.0, 'visita': 0.0}
         self.setWindowTitle('Tanteador PyQt')
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
@@ -179,10 +189,20 @@ class TanteadorWidget(QWidget):
         qp.setPen(QPen(QColor(*theme['num']['visita']['color']), 1))
         qp.drawText(int(w * 0.55), num_y, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['visita']))
 
+    def _suma_permitida(self, equipo):
+        """True si pasó el cooldown desde la última suma de ese equipo."""
+        ahora = time.time()
+        if ahora - self.last_up[equipo] < COOLDOWN_PUNTO:
+            return False
+        self.last_up[equipo] = ahora
+        return True
+
     def handle_event(self, topic):
         # Corre siempre en el hilo gráfico (ver mqtt_event).
         sound = None
         if topic == 'team1/up':
+            if not self._suma_permitida('local'):
+                return
             self.scores['local'] = min(99, self.scores['local'] + 1)
             self.scores['ultimo'] = 'local'
             sound = 'up_local'
@@ -190,6 +210,8 @@ class TanteadorWidget(QWidget):
             self.scores['local'] = max(0, self.scores['local'] - 1)
             sound = 'down_local'
         elif topic == 'team2/up':
+            if not self._suma_permitida('visita'):
+                return
             self.scores['visita'] = min(99, self.scores['visita'] + 1)
             self.scores['ultimo'] = 'visita'
             sound = 'up_visita'

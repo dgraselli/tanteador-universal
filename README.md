@@ -25,6 +25,10 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 .
 ├── tanteador.py                 # Interfaz gráfica principal (PyQt5 + MQTT)
 ├── tanteador.service            # Servicio systemd del marcador
+├── splash.py                    # Cartel de arranque en letras grandes
+├── splash.conf                  # Texto y colores del cartel
+├── splash.service               # Servicio systemd del cartel
+├── setup-splash.sh              # Silencia el log de arranque (una sola vez)
 ├── deploy.sh                    # Despliega a la Raspberry y reinicia el servicio
 ├── backup-firmware.sh           # Vuelca la flash del ESP antes de reflashear
 ├── medir-senal.sh               # Mide el RSSI del control a lo largo de la cancha

@@ -118,6 +118,41 @@ ssh chaca@192.168.216.1 'sudo systemctl restart tanteador'
 
 ---
 
+## Cambiar el cartel de arranque
+
+Mientras la Pi levanta, en lugar del log del kernel se ve un cartel grande. El
+texto y los colores están en `splash.conf`:
+
+```
+TEXTO="CLUB UNIVERSAL"
+COLORES="rojo verde"
+```
+
+Un color por palabra, en orden; si faltan, se repite el último. Los colores son
+`rojo verde amarillo azul magenta cyan blanco gris`. El tamaño y el reparto en
+renglones los calcula solo para llenar la pantalla, así que no hay nada más que
+tocar. Después de editarlo:
+
+```bash
+./deploy.sh
+```
+
+La fuente está adentro de `splash.py` (la Pi no tiene internet, así que no se le
+puede instalar figlet). Tiene letras, números y `- . ' !`, sin acentos ni ñ.
+
+Los parámetros que silencian el arranque (`quiet`, `logo.nologo`, etc.) los puso
+`setup-splash.sh` una única vez, en `/boot/firmware/cmdline.txt`. Para volver a
+ver el log de arranque, por ejemplo para diagnosticar algo:
+
+```bash
+./setup-splash.sh --revertir
+```
+
+Deja el `cmdline.txt` como estaba (guardó una copia en `cmdline.txt.antes-del-splash`,
+en la partición FAT, que se lee desde cualquier PC si alguna vez la Pi no arranca).
+
+---
+
 ## Actualizar el control remoto (ESP8266)
 
 ### La primera vez: por USB

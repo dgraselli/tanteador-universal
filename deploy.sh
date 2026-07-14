@@ -18,10 +18,13 @@ set -euo pipefail
 
 HOST="chaca@192.168.216.1"
 DEST="/home/chaca/tnt"
-UNIT="/etc/systemd/system/tanteador.service"
+SYSTEMD="/etc/systemd/system"
 LOWER="/media/root-ro"      # la SD real, cuando el overlay está activo
 DRY=""
 PERSIST=1
+
+ARCHIVOS=(tanteador.py splash.py splash.conf)
+UNITS=(tanteador.service splash.service)
 
 for arg in "$@"; do
     case "$arg" in
@@ -60,7 +63,7 @@ fi
 [ -n "$DRY" ] && echo "🔍 Modo --check: no se escribe nada."
 
 echo "📦 Sincronizando archivos..."
-rsync -av $DRY tanteador.py "$HOST:$DEST/"
+rsync -av $DRY "${ARCHIVOS[@]}" "$HOST:$DEST/"
 # --delete solo en sonidos/: si borrás un tema acá, se borra allá.
 rsync -av $DRY --delete sonidos/ "$HOST:$DEST/sonidos/"
 
@@ -69,17 +72,20 @@ if [ -n "$DRY" ]; then
     exit 0
 fi
 
-# El unit file se sincroniza como un archivo más. No alcanza con preguntar si
-# existe un servicio llamado 'tanteador': la Pi tenía uno viejo que apuntaba a
-# tanteador_pyqt.py (nombre que ya no existe) y el deploy lo reiniciaba feliz.
-if ! ssh "$HOST" "sudo cmp -s $UNIT -" < tanteador.service 2>/dev/null; then
-    echo "📝 Instalando/actualizando tanteador.service..."
-    scp -q tanteador.service "$HOST:/tmp/tanteador.service"
-    ssh "$HOST" "sudo mv /tmp/tanteador.service $UNIT && \
-                 sudo chown root:root $UNIT && \
-                 sudo systemctl daemon-reload && \
-                 sudo systemctl enable tanteador"
-fi
+# Los unit files se sincronizan como un archivo más. No alcanza con preguntar si
+# existe un servicio con ese nombre: la Pi tenía un tanteador.service viejo que
+# apuntaba a tanteador_pyqt.py (nombre que ya no existe) y el deploy lo
+# reiniciaba feliz, sin notar nada.
+for unit in "${UNITS[@]}"; do
+    if ! ssh "$HOST" "sudo cmp -s $SYSTEMD/$unit -" < "$unit" 2>/dev/null; then
+        echo "📝 Instalando/actualizando $unit..."
+        scp -q "$unit" "$HOST:/tmp/$unit"
+        ssh "$HOST" "sudo mv /tmp/$unit $SYSTEMD/$unit && \
+                     sudo chown root:root $SYSTEMD/$unit && \
+                     sudo systemctl daemon-reload && \
+                     sudo systemctl enable ${unit%.service}"
+    fi
+done
 
 # Todo lo anterior escribió en la capa de RAM. Ahora, lo mismo sobre la SD.
 if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
@@ -88,12 +94,19 @@ if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
     ssh "$HOST" "sudo mount -o remount,rw $LOWER"
     trap 'echo "🔒 Devolviendo la SD a solo lectura..."; ssh "$HOST" "sudo mount -o remount,ro $LOWER" || true' EXIT
 
-    rsync -a --rsync-path="sudo rsync" tanteador.py "$HOST:$LOWER$DEST/"
+    rsync -a --rsync-path="sudo rsync" "${ARCHIVOS[@]}" "$HOST:$LOWER$DEST/"
     rsync -a --rsync-path="sudo rsync" --delete sonidos/ "$HOST:$LOWER$DEST/sonidos/"
-    scp -q tanteador.service "$HOST:/tmp/tanteador.service"
-    ssh "$HOST" "sudo cp /tmp/tanteador.service $LOWER$UNIT && \
-                 sudo chown -R chaca:chaca $LOWER$DEST && \
-                 sync"
+    for unit in "${UNITS[@]}"; do
+        scp -q "$unit" "$HOST:/tmp/$unit"
+        # No alcanza con copiar el unit: 'systemctl enable' crea un symlink en
+        # <target>.wants/, y ese symlink también vive en la capa de RAM. Sin él,
+        # el servicio queda deshabilitado en cuanto reiniciás.
+        WANTED=$(grep -oP '(?<=^WantedBy=).*' "$unit" | head -1)
+        ssh "$HOST" "sudo cp /tmp/$unit $LOWER$SYSTEMD/$unit && \
+                     sudo mkdir -p $LOWER$SYSTEMD/$WANTED.wants && \
+                     sudo ln -sf $SYSTEMD/$unit $LOWER$SYSTEMD/$WANTED.wants/$unit"
+    done
+    ssh "$HOST" "sudo chown -R chaca:chaca $LOWER$DEST && sync"
 
     ssh "$HOST" "sudo mount -o remount,ro $LOWER"
     trap - EXIT

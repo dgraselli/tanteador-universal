@@ -24,11 +24,17 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 ```
 .
 ├── tanteador.py                 # Interfaz gráfica principal (PyQt5 + MQTT)
-├── setup-ap.sh                  # Script para configurar AP WiFi
+├── tanteador.service            # Servicio systemd del marcador
+├── deploy.sh                    # Despliega a la Raspberry y reinicia el servicio
+├── backup-firmware.sh           # Vuelca la flash del ESP antes de reflashear
+├── ACTUALIZAR.md                # Cómo actualizar el sistema en el club
+├── setup-ap.sh                  # Script para configurar AP WiFi (instalación inicial)
+├── secrets.env.example          # Plantilla de credenciales del AP
 ├── wifi-ap.service              # Servicio systemd para AP
 ├── esp8266/
 │   └── tanteador_remoto_LOLIN/  # Firmware del control remoto (ESP8266)
-│       └── tanteador_remoto_LOLIN.ino
+│       ├── tanteador_remoto_LOLIN.ino
+│       └── credentials.h.example
 ├── fonts/                       # Fuentes digitales (DS-Digital, Dimitri, etc)
 ├── sonidos/                     # Sonidos por evento y tema
 │   ├── descargar_sonidos.py     # Script para descargar/convertir sonidos
@@ -36,8 +42,11 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 │   ├── digital-dark/            # Sonidos para tema digital oscuro
 │   ├── universal/               # Sonidos para tema universal
 │   └── universal-dark/          # Sonidos para tema universal oscuro
-├── SDCARD/                      # Imágenes de SD (opcional)
+├── SDCARD/                      # Imágenes de SD (no versionadas)
 ```
+
+Las credenciales reales (`secrets.env` y `esp8266/.../credentials.h`) no están
+en el repo. Copiá los `.example` y completalos antes de instalar.
 
 ## Requerimientos
 
@@ -86,8 +95,11 @@ Para el control remoto:
    ```
 
 4. Flashea el firmware en el ESP8266 (`esp8266/tanteador_remoto_LOLIN/tanteador_remoto_LOLIN.ino`) usando Arduino IDE o PlatformIO.
-   - Configura el SSID y password WiFi en el código.
+   - Copia `credentials.h.example` a `credentials.h` y completa SSID, password y `OTA_PASSWORD`.
+   - La primera vez hay que flashear por USB; después se actualiza por WiFi (OTA).
    - El control remoto se conecta automáticamente y publica eventos por MQTT.
+
+Para actualizar un tanteador ya instalado, ver [ACTUALIZAR.md](ACTUALIZAR.md).
 
 ## Uso
 

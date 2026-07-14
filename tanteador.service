@@ -1,0 +1,23 @@
+[Unit]
+Description=Tanteador Universal (marcador PyQt5)
+After=multi-user.target
+# Sin límite de reintentos: durante el arranque falla varias veces a propósito
+# (X todavía no existe), y en un partido no queremos que systemd se rinda.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=chaca
+WorkingDirectory=/home/chaca/tnt
+ExecStart=/usr/bin/python3 /home/chaca/tnt/tanteador.py
+
+# X lo arranca el login de tty1 (.bashrc -> startx -> .xinitrc), no systemd.
+# Si este servicio corre antes de que X exista, python falla y systemd lo
+# reintenta cada 2s hasta que el display aparece.
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/chaca/.Xauthority
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

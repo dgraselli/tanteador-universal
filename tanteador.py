@@ -4,11 +4,10 @@
 
 import sys
 import time
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel
-from PyQt5.QtGui import QFont, QPainter, QColor, QPen, QLinearGradient
-from PyQt5.QtCore import Qt, QTimer
-#from PyQt5.QtMultimedia import QSound
-#from PyQt5.QtCore import pyqtSignal
+import subprocess
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtGui import QFont, QPainter, QColor, QPen, QLinearGradient, QPolygon
+from PyQt5.QtCore import Qt, QTimer, QPoint, pyqtSignal
 
 import paho.mqtt.client as mqtt
 import os
@@ -52,32 +51,37 @@ THEMES = {
 }
 
 class TanteadorWidget(QWidget):
-        
+
+    # Los mensajes MQTT llegan en el hilo de red de paho. Esta señal los cruza
+    # al hilo gráfico, único que puede tocar el widget y repintar.
+    mqtt_event = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
-        
-        self.scores = {'local': 0, 'visita': 0, 'reset': 0, 'ultimo': None}
+
+        self.scores = {'local': 0, 'visita': 0, 'ultimo': None}
         self.theme = 'universal-dark'
         self.last_reset = time.time()
         self.setWindowTitle('Tanteador PyQt')
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
         self.setCursor(Qt.BlankCursor)
+        self.mqtt_event.connect(self.handle_event)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(1000)
 
 
     def play_sound(self, key):
-        path = os.path.join(os.path.dirname(__file__), 'sonidos', self.theme, f'{key}.wav')
-        print(path)
-        if path and os.path.exists(path):
-            os.system(f"aplay {path} &")
-        else:
-            path = os.path.join(os.path.dirname(__file__), 'sonidos', f'{key}.wav')
-            if path and os.path.exists(path):
-                os.system(f"aplay {path} &")
-            
+        base = os.path.dirname(__file__)
+        for path in (os.path.join(base, 'sonidos', self.theme, f'{key}.wav'),
+                     os.path.join(base, 'sonidos', f'{key}.wav')):
+            if os.path.exists(path):
+                subprocess.Popen(['aplay', '-q', path],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+                return
+
 
     def paintEvent(self, event):
         qp = QPainter(self)
@@ -96,9 +100,14 @@ class TanteadorWidget(QWidget):
         qp.setRenderHint(QPainter.Antialiasing)
         # Panel local
         panel_x_local = int(w * 0.03)
-        panel_y = int(h * 0.01)  # Subido casi al tope
+        panel_y = 50  # margen fijo contra el borde superior de la pantalla
         panel_w = int(w * 0.44)  # Más ancho
-        panel_h = int(h * 0.72)  # Más alto
+        # El panel pierde por arriba lo que ganó de margen: así el borde de abajo
+        # no se mueve y el triángulo y el reloj se quedan donde están.
+        panel_h = int(h * 0.72) + 20 - panel_y
+        # Los números cuelgan del pie del panel, no de su techo: si mañana cambia
+        # el margen de arriba, no se corren.
+        num_y = panel_y + panel_h - int(h * 0.65)
         qp.setPen(Qt.NoPen)
         bg = theme['background']
         qp.setBrush(QColor(*theme.get('shadow',bg)))
@@ -107,15 +116,37 @@ class TanteadorWidget(QWidget):
         panel_x_visita = int(w * 0.53)
         qp.drawRoundedRect(panel_x_visita, panel_y, panel_w, panel_h, panel_radius, panel_radius)
         # Borde indicador del último que anotó
-        border_width = max(6, int(h * 0.018))
-        if self.scores['ultimo'] == 'local':
-            qp.setPen(QPen(QColor(*theme['num']['local']['color']), border_width))
+        border_width = max(12, int(h * 0.035))
+        ultimo = self.scores['ultimo']
+        if ultimo in ('local', 'visita'):
+            color = QColor(*theme['num'][ultimo]['color'])
+            panel_x = panel_x_local if ultimo == 'local' else panel_x_visita
+            # El trazo se dibuja centrado sobre el rectángulo, así que hay que
+            # meterlo media pluma hacia adentro: si no, con este grosor el borde
+            # de arriba se comería el margen superior.
+            half = border_width // 2
+            qp.setPen(QPen(color, border_width))
             qp.setBrush(Qt.NoBrush)
-            qp.drawRoundedRect(panel_x_local, panel_y, panel_w, panel_h, panel_radius, panel_radius)
-        elif self.scores['ultimo'] == 'visita':
-            qp.setPen(QPen(QColor(*theme['num']['visita']['color']), border_width))
-            qp.setBrush(Qt.NoBrush)
-            qp.drawRoundedRect(panel_x_visita, panel_y, panel_w, panel_h, panel_radius, panel_radius)
+            qp.drawRoundedRect(panel_x + half, panel_y + half,
+                               panel_w - border_width, panel_h - border_width,
+                               panel_radius, panel_radius)
+            # Flecha hacia arriba debajo del panel. Va pegada al borde exterior
+            # (izquierda para local, derecha para visita) porque el reloj está
+            # centrado y a esta altura: por el medio se pisarían.
+            tri_w = int(h * 0.24)
+            tri_h = int(h * 0.16)
+            tri_top = panel_y + panel_h + int(h * 0.02)
+            if ultimo == 'local':
+                cx = panel_x_local + tri_w
+            else:
+                cx = panel_x_visita + panel_w - tri_w
+            qp.setPen(Qt.NoPen)
+            qp.setBrush(color)
+            qp.drawPolygon(QPolygon([
+                QPoint(cx, tri_top),
+                QPoint(cx - tri_w // 2, tri_top + tri_h),
+                QPoint(cx + tri_w // 2, tri_top + tri_h),
+            ]))
         # Reloj (solo hora y minuto)
         elapsed = int(time.time() - self.last_reset)
         horas = elapsed // 3600
@@ -135,26 +166,59 @@ class TanteadorWidget(QWidget):
         # Sombra local
         qp.setFont(font_num_local)
         qp.setPen(QPen(shadow_color, max(7, int(h * 0.035))))
-        qp.drawText(int(w * 0.05)+shadow_offset, panel_y + int(h * 0.07)+shadow_offset, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['local']))
+        qp.drawText(int(w * 0.05)+shadow_offset, num_y+shadow_offset, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['local']))
         # Sombra visita
         qp.setFont(font_num_visita)
         qp.setPen(QPen(shadow_color, max(7, int(h * 0.035))))
-        qp.drawText(int(w * 0.55)+shadow_offset, panel_y + int(h * 0.07)+shadow_offset, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['visita']))
+        qp.drawText(int(w * 0.55)+shadow_offset, num_y+shadow_offset, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['visita']))
         # Números relleno
         qp.setFont(font_num_local)
         qp.setPen(QPen(QColor(*theme['num']['local']['color']), 1))
-        qp.drawText(int(w * 0.05), panel_y + int(h * 0.07), int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['local']))
+        qp.drawText(int(w * 0.05), num_y, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['local']))
         qp.setFont(font_num_visita)
         qp.setPen(QPen(QColor(*theme['num']['visita']['color']), 1))
-        qp.drawText(int(w * 0.55), panel_y + int(h * 0.07), int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['visita']))
+        qp.drawText(int(w * 0.55), num_y, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['visita']))
 
-    def update_scores(self, scores, theme):
-        self.scores = scores
-        self.theme = theme
-        if scores.get('reset'):
+    def handle_event(self, topic):
+        # Corre siempre en el hilo gráfico (ver mqtt_event).
+        sound = None
+        if topic == 'team1/up':
+            self.scores['local'] = min(99, self.scores['local'] + 1)
+            self.scores['ultimo'] = 'local'
+            sound = 'up_local'
+        elif topic == 'team1/down':
+            self.scores['local'] = max(0, self.scores['local'] - 1)
+            sound = 'down_local'
+        elif topic == 'team2/up':
+            self.scores['visita'] = min(99, self.scores['visita'] + 1)
+            self.scores['ultimo'] = 'visita'
+            sound = 'up_visita'
+        elif topic == 'team2/down':
+            self.scores['visita'] = max(0, self.scores['visita'] - 1)
+            sound = 'down_visita'
+        elif topic == 'reset':
+            self.scores['local'] = 0
+            self.scores['visita'] = 0
+            self.scores['ultimo'] = None
             self.last_reset = time.time()
-            self.scores['reset'] = None
-        self.update()
+            sound = 'reset'
+        elif topic == 'theme':
+            # Alternar cíclicamente entre los temas definidos
+            theme_names = list(THEMES.keys())
+            if self.theme in theme_names:
+                idx = theme_names.index(self.theme)
+                self.theme = theme_names[(idx + 1) % len(theme_names)]
+            else:
+                self.theme = theme_names[0]
+            print(f"Cambiando tema a: {self.theme}")
+        else:
+            return
+
+        # Primero el número en pantalla, después el sonido: lanzar aplay cuesta
+        # unos cuantos ms y el jugador no debe esperarlos para ver su punto.
+        self.repaint()
+        if sound:
+            self.play_sound(sound)
 
 # MQTT callbacks
 class TanteadorMQTT:
@@ -163,7 +227,9 @@ class TanteadorMQTT:
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-        self.client.connect('localhost', 1883, 60)
+        # connect_async + loop_start: si mosquitto todavía no levantó (arranque
+        # de la Pi) reintenta solo en vez de abortar.
+        self.client.connect_async('localhost', 1883, 60)
         self.client.loop_start()
     def on_connect(self, client, userdata, flags, rc):
         topics = [
@@ -177,40 +243,8 @@ class TanteadorMQTT:
         for t in topics:
             client.subscribe(t)
     def on_message(self, client, userdata, msg):
-        topic = msg.topic
-        scores = self.widget.scores.copy()
-        theme = self.widget.theme
-        if topic == 'team1/up':
-            scores['local'] = min(99, scores['local'] + 1)
-            scores['ultimo'] = 'local'
-            self.widget.play_sound('up_local')
-
-        elif topic == 'team1/down':
-            scores['local'] = max(0, scores['local'] - 1)
-            self.widget.play_sound('down_local')
-        elif topic == 'team2/up':
-            scores['visita'] = min(99, scores['visita'] + 1)
-            scores['ultimo'] = 'visita'
-            self.widget.play_sound('up_visita')
-        elif topic == 'team2/down':
-            scores['visita'] = max(0, scores['visita'] - 1)
-            self.widget.play_sound('down_visita')
-        elif topic == 'reset':
-            scores['local'] = 0
-            scores['visita'] = 0
-            scores['reset'] = 1
-            scores['ultimo'] = None
-            self.widget.play_sound('reset')
-        elif topic == 'theme':
-            # Alternar cíclicamente entre los temas definidos
-            theme_names = list(THEMES.keys())
-            if theme in theme_names:
-                idx = theme_names.index(theme)
-                theme = theme_names[(idx + 1) % len(theme_names)]
-            else:
-                theme = theme_names[0]
-            print(f"Cambiando tema a: {theme}")
-        self.widget.update_scores(scores, theme)
+        # Sin trabajo pesado acá: el hilo de red vuelve enseguida a leer socket.
+        self.widget.mqtt_event.emit(msg.topic)
 
 def main():
     app = QApplication(sys.argv)

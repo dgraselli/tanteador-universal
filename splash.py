@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cartel de arranque del tanteador.
 
-Dibuja un texto en letras grandes de bloques, centrado y con color. Lo usa
+Dibuja un texto en letras grandes de bloque macizo, centrado y con color. Lo usa
 splash.service para tapar el log del kernel mientras la Pi arranca.
 
 El texto y los colores salen de splash.conf:
@@ -11,63 +11,597 @@ El texto y los colores salen de splash.conf:
     ./splash.py --colores "rojo verde" "CLUB UNIVERSAL"
     ./splash.py --cols 80 --rows 24 "HOLA"   # simula otra pantalla
 
-Sin dependencias a propósito: la Pi no tiene internet, así que no se le puede
-instalar figlet ni nada por el estilo. La fuente va acá adentro.
+La fuente (GLIFOS) se generó una vez con figlet (fuente "ANSI Regular") en la
+notebook y quedó escrita acá: la Pi no tiene internet y no se le puede instalar
+figlet. Cada letra es un bitmap de puntos ('#'/'.'); dos filas de puntos entran
+en una fila de consola usando medios bloques (▀ ▄ █), lo que duplica la
+resolución vertical y deja escalar el dibujo sin que se rompa.
 """
 
 import os
 import sys
 
-# Fuente de bloques, 7x7, con trazos de 2 píxeles de ancho: es lo que le da el
-# cuerpo. Con trazos de 1 píxel las letras se ven flacas en una pantalla grande.
-FUENTE = {
-    'A': "..###..|.##.##.|##...##|##...##|#######|##...##|##...##",
-    'B': "######.|##...##|##...##|######.|##...##|##...##|######.",
-    'C': ".#####.|##...##|##.....|##.....|##.....|##...##|.#####.",
-    'D': "######.|##...##|##...##|##...##|##...##|##...##|######.",
-    'E': "#######|##.....|##.....|#####..|##.....|##.....|#######",
-    'F': "#######|##.....|##.....|#####..|##.....|##.....|##.....",
-    'G': ".#####.|##...##|##.....|##..###|##...##|##...##|.#####.",
-    'H': "##...##|##...##|##...##|#######|##...##|##...##|##...##",
-    'I': "#######|..###..|..###..|..###..|..###..|..###..|#######",
-    'J': "....###|.....##|.....##|.....##|.....##|##...##|.#####.",
-    'K': "##...##|##..##.|##.##..|####...|##.##..|##..##.|##...##",
-    'L': "##.....|##.....|##.....|##.....|##.....|##.....|#######",
-    'M': "##...##|###.###|#######|##.#.##|##...##|##...##|##...##",
-    'N': "##...##|###..##|####.##|##.####|##..###|##...##|##...##",
-    'O': ".#####.|##...##|##...##|##...##|##...##|##...##|.#####.",
-    'P': "######.|##...##|##...##|######.|##.....|##.....|##.....",
-    'Q': ".#####.|##...##|##...##|##...##|##.#.##|##..##.|.####.#",
-    'R': "######.|##...##|##...##|######.|##.##..|##..##.|##...##",
-    'S': ".#####.|##...##|##.....|.#####.|.....##|##...##|.#####.",
-    'T': "#######|..###..|..###..|..###..|..###..|..###..|..###..",
-    'U': "##...##|##...##|##...##|##...##|##...##|##...##|.#####.",
-    'V': "##...##|##...##|##...##|##...##|##...##|.##.##.|..###..",
-    'W': "##...##|##...##|##...##|##.#.##|#######|###.###|##...##",
-    'X': "##...##|##...##|.##.##.|..###..|.##.##.|##...##|##...##",
-    'Y': "##...##|##...##|.##.##.|..###..|..###..|..###..|..###..",
-    'Z': "#######|....##.|...##..|..##...|.##....|##.....|#######",
-    '0': ".#####.|##...##|##..###|##.#.##|###..##|##...##|.#####.",
-    '1': "..###..|.####..|..###..|..###..|..###..|..###..|.#####.",
-    '2': ".#####.|##...##|....##.|...##..|..##...|.##....|#######",
-    '3': "######.|.....##|.....##|.#####.|.....##|.....##|######.",
-    '4': "...###.|..####.|.##.##.|##..##.|#######|....##.|....##.",
-    '5': "#######|##.....|######.|.....##|.....##|##...##|.#####.",
-    '6': ".#####.|##...##|##.....|######.|##...##|##...##|.#####.",
-    '7': "#######|.....##|....##.|...##..|..##...|..##...|..##...",
-    '8': ".#####.|##...##|##...##|.#####.|##...##|##...##|.#####.",
-    '9': ".#####.|##...##|##...##|.######|.....##|##...##|.#####.",
-    '-': ".......|.......|.......|#######|.......|.......|.......",
-    '.': ".......|.......|.......|.......|.......|.###...|.###...",
-    "'": "..##...|..##...|.......|.......|.......|.......|.......",
-    '!': "..##...|..##...|..##...|..##...|..##...|.......|..##...",
-    ' ': ".......|.......|.......|.......|.......|.......|.......",
+ALTO_PX = 12
+GLIFOS = {
+    'A': [
+        '.#####..',
+        '.#####..',
+        '##...##.',
+        '##...##.',
+        '#######.',
+        '#######.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '........',
+        '........',
+    ],
+    'B': [
+        '######..',
+        '######..',
+        '##...##.',
+        '##...##.',
+        '######..',
+        '######..',
+        '##...##.',
+        '##...##.',
+        '######..',
+        '######..',
+        '........',
+        '........',
+    ],
+    'C': [
+        '.######.',
+        '.######.',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '.######.',
+        '.######.',
+        '........',
+        '........',
+    ],
+    'D': [
+        '######..',
+        '######..',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '######..',
+        '######..',
+        '........',
+        '........',
+    ],
+    'E': [
+        '#######.',
+        '#######.',
+        '##......',
+        '##......',
+        '#####...',
+        '#####...',
+        '##......',
+        '##......',
+        '#######.',
+        '#######.',
+        '........',
+        '........',
+    ],
+    'F': [
+        '#######.',
+        '#######.',
+        '##......',
+        '##......',
+        '#####...',
+        '#####...',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '........',
+        '........',
+    ],
+    'G': [
+        '.######..',
+        '.######..',
+        '##.......',
+        '##.......',
+        '##...###.',
+        '##...###.',
+        '##....##.',
+        '##....##.',
+        '.######..',
+        '.######..',
+        '.........',
+        '.........',
+    ],
+    'H': [
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '#######.',
+        '#######.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '........',
+        '........',
+    ],
+    'I': [
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '...',
+        '...',
+    ],
+    'J': [
+        '.....##.',
+        '.....##.',
+        '.....##.',
+        '.....##.',
+        '.....##.',
+        '.....##.',
+        '##...##.',
+        '##...##.',
+        '.#####..',
+        '.#####..',
+        '........',
+        '........',
+    ],
+    'K': [
+        '##...##.',
+        '##...##.',
+        '##..##..',
+        '##..##..',
+        '#####...',
+        '#####...',
+        '##..##..',
+        '##..##..',
+        '##...##.',
+        '##...##.',
+        '........',
+        '........',
+    ],
+    'L': [
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '#######.',
+        '#######.',
+        '........',
+        '........',
+    ],
+    'M': [
+        '###....###.',
+        '###....###.',
+        '####..####.',
+        '####..####.',
+        '##.####.##.',
+        '##.####.##.',
+        '##..##..##.',
+        '##..##..##.',
+        '##......##.',
+        '##......##.',
+        '...........',
+        '...........',
+    ],
+    'N': [
+        '###....##.',
+        '###....##.',
+        '####...##.',
+        '####...##.',
+        '##.##..##.',
+        '##.##..##.',
+        '##..##.##.',
+        '##..##.##.',
+        '##...####.',
+        '##...####.',
+        '..........',
+        '..........',
+    ],
+    'O': [
+        '.######..',
+        '.######..',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '.######..',
+        '.######..',
+        '.........',
+        '.........',
+    ],
+    'P': [
+        '######..',
+        '######..',
+        '##...##.',
+        '##...##.',
+        '######..',
+        '######..',
+        '##......',
+        '##......',
+        '##......',
+        '##......',
+        '........',
+        '........',
+    ],
+    'Q': [
+        '.######..',
+        '.######..',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##.##.##.',
+        '.######..',
+        '.######..',
+        '....##...',
+        '.........',
+    ],
+    'R': [
+        '######..',
+        '######..',
+        '##...##.',
+        '##...##.',
+        '######..',
+        '######..',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '........',
+        '........',
+    ],
+    'S': [
+        '#######.',
+        '#######.',
+        '##......',
+        '##......',
+        '#######.',
+        '#######.',
+        '.....##.',
+        '.....##.',
+        '#######.',
+        '#######.',
+        '........',
+        '........',
+    ],
+    'T': [
+        '########.',
+        '########.',
+        '...##....',
+        '...##....',
+        '...##....',
+        '...##....',
+        '...##....',
+        '...##....',
+        '...##....',
+        '...##....',
+        '.........',
+        '.........',
+    ],
+    'U': [
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '.######..',
+        '.######..',
+        '.........',
+        '.........',
+    ],
+    'V': [
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '##....##.',
+        '.##..##..',
+        '.##..##..',
+        '..####...',
+        '..####...',
+        '.........',
+        '.........',
+    ],
+    'W': [
+        '##.....##.',
+        '##.....##.',
+        '##.....##.',
+        '##.....##.',
+        '##..#..##.',
+        '##..#..##.',
+        '##.###.##.',
+        '##.###.##.',
+        '.###.###..',
+        '.###.###..',
+        '..........',
+        '..........',
+    ],
+    'X': [
+        '##...##.',
+        '##...##.',
+        '.##.##..',
+        '.##.##..',
+        '..###...',
+        '..###...',
+        '.##.##..',
+        '.##.##..',
+        '##...##.',
+        '##...##.',
+        '........',
+        '........',
+    ],
+    'Y': [
+        '##....##.',
+        '##....##.',
+        '.##..##..',
+        '.##..##..',
+        '..####...',
+        '..####...',
+        '...##....',
+        '...##....',
+        '...##....',
+        '...##....',
+        '.........',
+        '.........',
+    ],
+    'Z': [
+        '#######.',
+        '#######.',
+        '...###..',
+        '...###..',
+        '..###...',
+        '..###...',
+        '.###....',
+        '.###....',
+        '#######.',
+        '#######.',
+        '........',
+        '........',
+    ],
+    '0': [
+        '.######..',
+        '.######..',
+        '##..####.',
+        '##..####.',
+        '##.##.##.',
+        '##.##.##.',
+        '####..##.',
+        '####..##.',
+        '.######..',
+        '.######..',
+        '.........',
+        '.........',
+    ],
+    '1': [
+        '.##.',
+        '.##.',
+        '###.',
+        '###.',
+        '.##.',
+        '.##.',
+        '.##.',
+        '.##.',
+        '.##.',
+        '.##.',
+        '....',
+        '....',
+    ],
+    '2': [
+        '######..',
+        '######..',
+        '.....##.',
+        '.....##.',
+        '.#####..',
+        '.#####..',
+        '##......',
+        '##......',
+        '#######.',
+        '#######.',
+        '........',
+        '........',
+    ],
+    '3': [
+        '######..',
+        '######..',
+        '.....##.',
+        '.....##.',
+        '.#####..',
+        '.#####..',
+        '.....##.',
+        '.....##.',
+        '######..',
+        '######..',
+        '........',
+        '........',
+    ],
+    '4': [
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '##...##.',
+        '#######.',
+        '#######.',
+        '.....##.',
+        '.....##.',
+        '.....##.',
+        '.....##.',
+        '........',
+        '........',
+    ],
+    '5': [
+        '#######.',
+        '#######.',
+        '##......',
+        '##......',
+        '#######.',
+        '#######.',
+        '.....##.',
+        '.....##.',
+        '#######.',
+        '#######.',
+        '........',
+        '........',
+    ],
+    '6': [
+        '.######..',
+        '.######..',
+        '##.......',
+        '##.......',
+        '#######..',
+        '#######..',
+        '##....##.',
+        '##....##.',
+        '.######..',
+        '.######..',
+        '.........',
+        '.........',
+    ],
+    '7': [
+        '#######.',
+        '#######.',
+        '.....##.',
+        '.....##.',
+        '....##..',
+        '....##..',
+        '...##...',
+        '...##...',
+        '...##...',
+        '...##...',
+        '........',
+        '........',
+    ],
+    '8': [
+        '.#####..',
+        '.#####..',
+        '##...##.',
+        '##...##.',
+        '.#####..',
+        '.#####..',
+        '##...##.',
+        '##...##.',
+        '.#####..',
+        '.#####..',
+        '........',
+        '........',
+    ],
+    '9': [
+        '.#####..',
+        '.#####..',
+        '##...##.',
+        '##...##.',
+        '.######.',
+        '.######.',
+        '.....##.',
+        '.....##.',
+        '.#####..',
+        '.#####..',
+        '........',
+        '........',
+    ],
+    '-': [
+        '......',
+        '......',
+        '......',
+        '......',
+        '#####.',
+        '#####.',
+        '......',
+        '......',
+        '......',
+        '......',
+        '......',
+        '......',
+    ],
+    '.': [
+        '...',
+        '...',
+        '...',
+        '...',
+        '...',
+        '...',
+        '...',
+        '...',
+        '##.',
+        '##.',
+        '...',
+        '...',
+    ],
+    "'": [
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+    ],
+    '!': [
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '##.',
+        '...',
+        '...',
+        '##.',
+        '##.',
+        '...',
+        '...',
+    ],
+    ' ': [
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+        '....',
+    ],
 }
 
-ALTO = 7
-ANCHO = 7
-SEPARACION = 1          # casillas entre letra y letra
-BLOQUE = '█'
+# Cuánto del ancho de la pantalla tratar de llenar con la palabra más larga.
+OCUPACION = 0.90
+HUECO_RENGLONES = 3      # filas en blanco entre una palabra y la siguiente
 
 COLORES = {
     'rojo':     '\033[1;31m',
@@ -82,108 +616,79 @@ COLORES = {
 RESET = '\033[0m'
 
 
-def glifo(c):
-    return FUENTE.get(c.upper(), FUENTE[' ']).split('|')
+def bitmap_palabra(texto):
+    """Las ALTO_PX filas de puntos de una palabra, pegando letra con letra."""
+    filas = [''] * ALTO_PX
+    for c in texto.upper():
+        g = GLIFOS.get(c, GLIFOS[' '])
+        for i in range(ALTO_PX):
+            filas[i] += g[i]
+    return filas
 
 
-def ancho_casillas(texto):
-    """Ancho de una línea, en casillas de la fuente."""
-    if not texto:
-        return 0
-    return len(texto) * (ANCHO + SEPARACION) - SEPARACION
+def escalar(bitmap, n):
+    """Agranda el bitmap n veces a lo ancho y a lo alto."""
+    salida = []
+    for fila in bitmap:
+        ancha = ''.join(ch * n for ch in fila)
+        salida += [ancha] * n
+    return salida
 
 
-def repartir(palabras, n_lineas):
-    """Reparte las palabras en n renglones, lo más parejo posible."""
-    if n_lineas >= len(palabras):
-        return [[p] for p in palabras]
-    lineas, por_linea = [], len(palabras) / n_lineas
-    for i in range(n_lineas):
-        lineas.append(palabras[round(i * por_linea):round((i + 1) * por_linea)])
+def a_consola(bitmap):
+    """Convierte el bitmap a filas de texto usando medios bloques.
+
+    Dos filas de puntos entran en una sola fila de consola: el de arriba y el de
+    abajo deciden si va bloque entero, medio de arriba, medio de abajo o nada.
+    """
+    lineas = []
+    for i in range(0, len(bitmap), 2):
+        arriba = bitmap[i]
+        abajo = bitmap[i + 1] if i + 1 < len(bitmap) else '.' * len(arriba)
+        linea = ''
+        for a, b in zip(arriba, abajo):
+            a, b = a == '#', b == '#'
+            linea += '█' if a and b else '▀' if a else '▄' if b else ' '
+        lineas.append(linea.rstrip())
     return lineas
 
 
-def elegir_disposicion(palabras, cols, filas):
-    """Busca el reparto en renglones y la escala que llenen mejor la pantalla.
-
-    Devuelve (renglones, ex, ey): cuántas columnas y cuántas filas de consola
-    mide cada casilla de la fuente. Van por separado porque los caracteres de
-    terminal son como el doble de altos que de anchos: con ex = 2*ey las letras
-    salen con su proporción real.
-    """
-    if not palabras:
-        return [], 0, 0
-
-    mejor_renglones, mejor_ex, mejor_ey = [], 0, 0
-    for n in range(1, len(palabras) + 1):
-        renglones = repartir(palabras, n)
-        ancho_px = max(ancho_casillas(' '.join(r)) for r in renglones)
-        alto_px = n * ALTO + (n - 1)          # un renglón de hueco entre líneas
-        for ey in range(1, 9):
-            for ex in range(1, 13):
-                # No dejamos que la letra se deforme demasiado: entre un poco
-                # angosta y un poco ancha respecto de su proporción real.
-                if not 0.6 <= ex / (2 * ey) <= 1.15:
-                    continue
-                if ancho_px * ex > cols - 2 or alto_px * ey > filas - 2:
-                    continue
-                if ex * ey > mejor_ex * mejor_ey:
-                    mejor_renglones, mejor_ex, mejor_ey = renglones, ex, ey
-    return mejor_renglones, mejor_ex, mejor_ey
-
-
-def colorear(palabras_linea, colores):
-    """Un color por palabra; si faltan colores, se repite el último."""
-    fuera = []
-    for i, palabra in enumerate(palabras_linea):
-        color = colores[i] if i < len(colores) else (colores[-1] if colores else None)
-        fuera.append((palabra, COLORES.get(color, '')))
-    return fuera
+def elegir_escala(palabras, cols, filas):
+    """La escala entera más grande que entre a lo ancho y a lo alto."""
+    ancho_px = max(len(bitmap_palabra(p)[0]) for p in palabras)
+    # alto en filas de consola: ALTO_PX/2 por palabra, más los huecos
+    alto_base = len(palabras) * (ALTO_PX // 2) + (len(palabras) - 1) * HUECO_RENGLONES
+    for n in range(8, 0, -1):
+        if ancho_px * n <= cols * OCUPACION and alto_base * n <= filas - 2:
+            return n
+    return 1
 
 
 def dibujar(texto, cols, filas, colores=None):
     palabras = texto.split()
-    renglones, ex, ey = elegir_disposicion(palabras, cols, filas)
-    if ex < 1:
-        return [texto.center(cols)]
-
-    # A cada palabra le toca su color, en el orden en que aparecen en el texto.
+    if not palabras:
+        return []
     colores = colores or []
-    n = 0
+    n = elegir_escala(palabras, cols, filas)
+
     salida = []
-    for i, renglon in enumerate(renglones):
+    for i, palabra in enumerate(palabras):
         if i:
-            salida += [''] * ey                     # hueco entre renglones
-        pintadas = colorear(renglon, colores[n:])
-        n += len(renglon)
+            salida += [''] * HUECO_RENGLONES
+        lineas = a_consola(escalar(bitmap_palabra(palabra), n))
+        ancho = max((len(l) for l in lineas), default=0)
+        sangria = ' ' * max(0, (cols - ancho) // 2)
+        color = colores[i] if i < len(colores) else (colores[-1] if colores else None)
+        cod = COLORES.get(color, '')
+        for l in lineas:
+            l = sangria + l
+            salida.append(f"{cod}{l}{RESET}" if cod else l)
 
-        for fila in range(ALTO):
-            # Cada palabra es un pedazo con su color; entre palabras, un espacio.
-            pedazos, ancho_visible = [], 0
-            for j, (palabra, color) in enumerate(pintadas):
-                if j:
-                    hueco = ' ' * ((ANCHO + SEPARACION) * ex)   # el espacio entre palabras
-                    pedazos.append(hueco)
-                    ancho_visible += len(hueco)
-                casillas = ''
-                for k, letra in enumerate(palabra):
-                    if k:
-                        casillas += '.' * SEPARACION
-                    casillas += glifo(letra)[fila]
-                pintado = ''.join(BLOQUE * ex if c == '#' else ' ' * ex
-                                  for c in casillas)
-                ancho_visible += len(pintado)
-                pedazos.append(f"{color}{pintado}{RESET}" if color else pintado)
-
-            sangria = ' ' * max(0, (cols - ancho_visible) // 2)
-            salida += [sangria + ''.join(pedazos)] * ey
-
-    arriba = max(0, (filas - len(salida)) // 2)     # centrado vertical
+    arriba = max(0, (filas - len(salida)) // 2)      # centrado vertical
     return [''] * arriba + salida
 
 
 def leer_config(base):
-    """Lee TEXTO y COLORES de splash.conf."""
     ruta = os.path.join(base, 'splash.conf')
     valores = {}
     if not os.path.exists(ruta):
@@ -219,8 +724,8 @@ def main():
             cols = cols or tam.columns
             filas = filas or tam.lines
         except OSError:
-            # Sin terminal (systemd escribe directo a /dev/tty1): asumimos la
-            # consola de la Pi, que con el framebuffer de 1920x1080 es 240x67.
+            # Sin terminal (systemd escribe directo a /dev/tty1): la consola de
+            # la Pi, con el framebuffer de 1920x1080, es de 240x67.
             cols = cols or 240
             filas = filas or 67
 

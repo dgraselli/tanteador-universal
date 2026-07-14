@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 860" width="1040" height="860" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="flecha" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#888"/>
+    </marker>
+    <radialGradient id="lobulo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22aa55" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#22aa55" stop-opacity="0.04"/>
+    </radialGradient>
+    <radialGradient id="lobuloMal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#cc3333" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#cc3333" stop-opacity="0.04"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1040" height="860" fill="#ffffff"/>
+
+  <text x="520" y="40" text-anchor="middle" font-size="26" font-weight="bold" fill="#111">
+    Orientación de las placas — vista de costado (alzado)
+  </text>
+  <text x="520" y="66" text-anchor="middle" font-size="15" fill="#666">
+    Las dos antenas paradas y paralelas entre sí. El borde de la antena mira al techo, nunca al otro equipo.
+  </text>
+
+  <!-- ============ PANEL 1: BIEN ============ -->
+  <g>
+    <rect x="30" y="90" width="980" height="290" rx="10" fill="#f2faf4" stroke="#22aa55" stroke-width="2"/>
+    <text x="52" y="122" font-size="19" font-weight="bold" fill="#1a7a40">✔ BIEN — las dos verticales</text>
+
+    <!-- piso y techo -->
+    <line x1="52" y1="352" x2="988" y2="352" stroke="#bbb" stroke-width="2"/>
+    <text x="60" y="368" font-size="12" fill="#999">piso</text>
+
+    <!-- lóbulos: dona vista de costado = dos panzas laterales -->
+    <ellipse cx="205" cy="250" rx="130" ry="52" fill="url(#lobulo)"/>
+    <ellipse cx="835" cy="250" rx="130" ry="52" fill="url(#lobulo)"/>
+
+    <!-- TABLERO con la Pi -->
+    <g>
+      <rect x="120" y="150" width="170" height="130" rx="6" fill="#fff" stroke="#333" stroke-width="2"/>
+      <text x="205" y="143" text-anchor="middle" font-size="13" fill="#555">tablero</text>
+      <!-- policarbonato -->
+      <rect x="120" y="150" width="9" height="130" fill="#bcdcf0" stroke="#7fb4d4"/>
+      <text x="112" y="300" text-anchor="middle" font-size="11" fill="#5a8fae" transform="rotate(-90 112 300)">policarbonato</text>
+      <!-- monitor (chasis metálico) -->
+      <rect x="238" y="162" width="44" height="106" fill="#ddd" stroke="#999"/>
+      <text x="260" y="222" text-anchor="middle" font-size="10" fill="#777" transform="rotate(-90 260 222)">monitor</text>
+      <!-- la Pi: placa parada, antena arriba -->
+      <rect x="160" y="196" width="18" height="66" fill="#2a7d4f" stroke="#14512f" stroke-width="1.5"/>
+      <polygon points="160,196 178,196 169,182" fill="#22aa55" stroke="#14512f" stroke-width="1.5"/>
+      <text x="150" y="230" text-anchor="middle" font-size="11" fill="#14512f" transform="rotate(-90 150 230)">Pi Zero W</text>
+    </g>
+
+    <!-- CAJA con el Wemos -->
+    <g>
+      <rect x="770" y="170" width="130" height="110" rx="8" fill="#fff" stroke="#333" stroke-width="2"/>
+      <text x="835" y="163" text-anchor="middle" font-size="13" fill="#555">caja estanca (plástico)</text>
+      <!-- wemos parado, antena arriba -->
+      <rect x="826" y="200" width="18" height="60" fill="#2a7d4f" stroke="#14512f" stroke-width="1.5"/>
+      <polygon points="826,200 844,200 835,186" fill="#22aa55" stroke="#14512f" stroke-width="1.5"/>
+      <text x="816" y="232" text-anchor="middle" font-size="11" fill="#14512f" transform="rotate(-90 816 232)">Wemos</text>
+      <!-- botones -->
+      <circle cx="790" cy="268" r="5" fill="#c33"/><circle cx="806" cy="268" r="5" fill="#3a3"/>
+    </g>
+
+    <!-- referencia -->
+    <g>
+      <polygon points="700,340 716,340 708,326" fill="#22aa55" stroke="#14512f" stroke-width="1.5"/>
+      <text x="726" y="341" font-size="12" fill="#1a7a40">= borde de la antena (apunta al techo en las dos placas)</text>
+    </g>
+
+    <!-- enlace -->
+    <line x1="300" y1="228" x2="762" y2="228" stroke="#22aa55" stroke-width="2" stroke-dasharray="8 5"/>
+    <text x="531" y="220" text-anchor="middle" font-size="13" fill="#1a7a40">≈ 10 m — enlace por el lóbulo fuerte</text>
+
+    <text x="531" y="262" text-anchor="middle" font-size="12" fill="#666">
+      La antena irradia como una rosquilla alrededor de su eje: fuerte hacia los costados,
+    </text>
+    <text x="531" y="280" text-anchor="middle" font-size="12" fill="#666">
+      ciega por las puntas. Con las dos paradas, los puntos ciegos apuntan al piso y al techo.
+    </text>
+  </g>
+
+  <!-- ============ PANEL 2: MAL — polarización cruzada ============ -->
+  <g>
+    <rect x="30" y="400" width="480" height="230" rx="10" fill="#fdf3f3" stroke="#cc3333" stroke-width="2"/>
+    <text x="52" y="430" font-size="17" font-weight="bold" fill="#a02020">✘ MAL — una parada y otra acostada</text>
+
+    <ellipse cx="140" cy="530" rx="70" ry="30" fill="url(#lobuloMal)"/>
+    <ellipse cx="400" cy="530" rx="30" ry="66" fill="url(#lobuloMal)"/>
+
+    <!-- Pi vertical -->
+    <rect x="131" y="505" width="16" height="52" fill="#a04545" stroke="#6d2020" stroke-width="1.5"/>
+    <polygon points="131,505 147,505 139,492" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
+    <text x="139" y="578" text-anchor="middle" font-size="11" fill="#a02020">Pi (vertical)</text>
+
+    <!-- Wemos horizontal -->
+    <rect x="374" y="522" width="52" height="16" fill="#a04545" stroke="#6d2020" stroke-width="1.5"/>
+    <polygon points="426,522 426,538 439,530" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
+    <text x="400" y="578" text-anchor="middle" font-size="11" fill="#a02020">Wemos (acostado)</text>
+
+    <line x1="160" y1="530" x2="360" y2="530" stroke="#cc3333" stroke-width="2" stroke-dasharray="4 4"/>
+
+    <text x="270" y="605" text-anchor="middle" font-size="13" font-weight="bold" fill="#a02020">
+      Polarización cruzada: perdés 10 a 20 dB
+    </text>
+    <text x="270" y="622" text-anchor="middle" font-size="11" fill="#8a5555">
+      Es el error más común y el más caro. La distancia no tiene nada que ver.
+    </text>
+  </g>
+
+  <!-- ============ PANEL 3: MAL — punta apuntando ============ -->
+  <g>
+    <rect x="530" y="400" width="480" height="230" rx="10" fill="#fdf3f3" stroke="#cc3333" stroke-width="2"/>
+    <text x="552" y="430" font-size="17" font-weight="bold" fill="#a02020">✘ MAL — la punta apunta al otro equipo</text>
+
+    <!-- vista en planta -->
+    <text x="770" y="450" text-anchor="middle" font-size="11" fill="#999">(vista desde arriba)</text>
+
+    <ellipse cx="640" cy="530" rx="30" ry="60" fill="url(#lobuloMal)"/>
+    <ellipse cx="900" cy="530" rx="30" ry="60" fill="url(#lobuloMal)"/>
+
+    <rect x="614" y="522" width="52" height="16" fill="#a04545" stroke="#6d2020" stroke-width="1.5"/>
+    <polygon points="666,522 666,538 679,530" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
+    <text x="640" y="578" text-anchor="middle" font-size="11" fill="#a02020">Pi</text>
+
+    <rect x="874" y="522" width="52" height="16" fill="#a04545" stroke="#6d2020" stroke-width="1.5"/>
+    <polygon points="874,522 874,538 861,530" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
+    <text x="900" y="578" text-anchor="middle" font-size="11" fill="#a02020">Wemos</text>
+
+    <line x1="690" y1="530" x2="850" y2="530" stroke="#cc3333" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="770" y="522" text-anchor="middle" font-size="12" fill="#a02020">zona ciega</text>
+
+    <text x="770" y="605" text-anchor="middle" font-size="13" font-weight="bold" fill="#a02020">
+      Se hablan por el punto ciego de las dos antenas
+    </text>
+    <text x="770" y="622" text-anchor="middle" font-size="11" fill="#8a5555">
+      Girá la placa 90°: el borde de la antena tiene que quedar de costado.
+    </text>
+  </g>
+
+  <!-- ============ NOTAS ============ -->
+  <g>
+    <rect x="30" y="650" width="980" height="185" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1.5"/>
+    <text x="52" y="680" font-size="16" font-weight="bold" fill="#333">Dónde está la antena en cada placa</text>
+
+    <text x="52" y="708" font-size="13" fill="#444">
+      <tspan font-weight="bold">Wemos D1 Mini:</tspan> el borde opuesto al conector USB. Se ve el serpenteo de cobre impreso, sin componentes alrededor.
+    </text>
+    <text x="52" y="730" font-size="13" fill="#444">
+      <tspan font-weight="bold">Pi Zero W:</tspan> la esquina con la zona triangular despejada, junto a la ranura de la microSD. No tiene componentes encima.
+    </text>
+
+    <text x="52" y="764" font-size="16" font-weight="bold" fill="#333">Lo que arruina todo, sin importar la orientación</text>
+    <text x="52" y="790" font-size="13" fill="#444">
+      • <tspan font-weight="bold">Metal a menos de 2 cm de la antena.</tspan> El chasis del monitor es el sospechoso nº 1: alejá la Pi todo lo que puedas.
+    </text>
+    <text x="52" y="812" font-size="13" fill="#444">
+      • <tspan font-weight="bold">Caja estanca metálica.</tspan> Es una jaula de Faraday: ninguna orientación la salva. Tiene que ser de plástico.
+    </text>
+    <text x="52" y="828" font-size="12" fill="#777">
+      El policarbonato del frente no molesta: cuesta 1 o 2 dB. Cables o tornillos cruzando sobre la antena, sí.
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+[Unit]
+Description=Cartel de arranque del tanteador
+DefaultDependencies=no
+After=local-fs.target
+Before=getty@tty1.service
+
+[Service]
+Type=oneshot
+# La consola es tty1: escribimos directo ahí, que es lo que ve el monitor.
+ExecStart=/usr/bin/python3 /home/chaca/tnt/splash.py
+StandardOutput=tty
+TTYPath=/dev/tty1
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

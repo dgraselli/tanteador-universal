@@ -1,0 +1,14 @@
+# Imágenes de tarjeta SD (varios GB cada una)
+SDCARD/
+*.img
+
+# Volcados de la flash del ESP: llevan la password del WiFi en texto plano
+*.bin
+
+# Credenciales reales (commitear solo los .example)
+secrets.env
+esp8266/tanteador_remoto_LOLIN/credentials.h
+
+# Python
+__pycache__/
+*.pyc

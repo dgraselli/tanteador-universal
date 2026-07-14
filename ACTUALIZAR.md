@@ -181,7 +181,21 @@ Apretá los botones y comprobá:
 
 Sobre el RSSI: de −30 a −60 dBm es excelente; de −60 a −70 está bien; de −70 a
 −80 es marginal y se va a cortar a ratos; peor que −85 dBm no hay enlace.
-Caminá la cancha con el control en la mano y mirá el peor valor.
+
+Para medirlo a lo largo de la cancha, dejá la notebook al lado del tablero y:
+
+```bash
+./medir-senal.sh 180        # mide 3 minutos
+```
+
+Agarrá el control, andá al primer punto, apretá una vez el botón del LOCAL para
+marcarlo, y quedate quieto ~20 segundos. Repetí en cada punto. Al terminar te
+muestra el peor, el mejor y la media de cada uno. El botón suma puntos en el
+tablero: cuando termines, mantené apretado RESET.
+
+El número que importa es el **peor** valor en el punto más lejano, con la caja
+cerrada y montada. Si ahí sigue por encima de −70 dBm, la señal queda descartada
+como causa de los cortes.
 
 ---
 

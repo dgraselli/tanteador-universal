@@ -27,6 +27,8 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 ├── tanteador.service            # Servicio systemd del marcador
 ├── deploy.sh                    # Despliega a la Raspberry y reinicia el servicio
 ├── backup-firmware.sh           # Vuelca la flash del ESP antes de reflashear
+├── medir-senal.sh               # Mide el RSSI del control a lo largo de la cancha
+├── simular-control.sh           # Simula el control remoto por MQTT (pruebas locales)
 ├── ACTUALIZAR.md                # Cómo actualizar el sistema en el club
 ├── setup-ap.sh                  # Script para configurar AP WiFi (instalación inicial)
 ├── secrets.env.example          # Plantilla de credenciales del AP

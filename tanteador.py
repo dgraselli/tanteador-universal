@@ -5,6 +5,7 @@
 import sys
 import time
 import subprocess
+import threading
 import io
 import math
 import struct
@@ -19,6 +20,21 @@ import paho.mqtt.client as mqtt
 # Subilo a 2 si todavía se cuela algún doble; bajalo si alguna vez bloquea un
 # punto legítimo (no debería: entre tanto y tanto siempre pasan varios segundos).
 COOLDOWN_PUNTO = 0.5
+
+# Pin BCM donde está (o va a estar) la chicharra de 12 V, vía MOSFET o relé.
+# Los beeps salen por la chicharra Y por el parlante a la vez, con el mismo
+# ritmo: queda activo aunque no haya nada conectado (el pin suena al aire),
+# así conectar la chicharra no requiere tocar código. None = solo parlante.
+CHICHARRA_GPIO = 18  # pin físico 12
+
+# Ritmo de cada evento: lista de (duración, silencio posterior) en segundos.
+# Anotar: un beep largo y fuerte, el mismo para los dos equipos.
+# Retroceder: dos beeps cortitos. Reset: uno más largo (y grave, en parlante).
+PULSOS = {
+    'up': [(0.30, 0)],
+    'down': [(0.08, 0.06), (0.08, 0)],
+    'reset': [(0.50, 0)],
+}
 
 # Beeps sintetizados en memoria: el tanteador no depende de ningún .wav en la SD.
 SAMPLE_RATE = 44100
@@ -46,11 +62,8 @@ def _wav_beep(pulsos, freq):
         w.writeframes(bytes(frames))
     return buf.getvalue()
 
-# Anotar: un beep largo y fuerte, el mismo para los dos equipos.
-# Retroceder: dos beeps cortitos. Reset: uno grave y más largo.
-BEEP_UP = _wav_beep([(0.30, 0)], 1000)
-BEEP_DOWN = _wav_beep([(0.08, 0.06), (0.08, 0)], 1000)
-BEEP_RESET = _wav_beep([(0.50, 0)], 440)
+BEEPS = {tipo: _wav_beep(pulsos, 440 if tipo == 'reset' else 1000)
+         for tipo, pulsos in PULSOS.items()}
 
 # Definición de temas parametrizados. El orden importa: es el orden de rotación
 # al cambiar de tema, y el primero es el inicial (los oscuros primero, que son
@@ -119,6 +132,20 @@ class TanteadorWidget(QWidget):
         # corrección (resta justo después de una suma) entra siempre.
         self.last_up = {'local': 0.0, 'visita': 0.0}
         self.last_down = {'local': 0.0, 'visita': 0.0}
+        # Chicharra por GPIO, si está configurada. Si RPi.GPIO no está o el
+        # pin no se puede tomar, los beeps caen al parlante: un problema de
+        # GPIO no puede dejar el tanteador sin arrancar.
+        self._gpio = None
+        if CHICHARRA_GPIO is not None:
+            try:
+                import RPi.GPIO as GPIO
+                GPIO.setmode(GPIO.BCM)
+                GPIO.setwarnings(False)
+                GPIO.setup(CHICHARRA_GPIO, GPIO.OUT, initial=GPIO.LOW)
+                self._gpio = GPIO
+                self._chicharra_lock = threading.Lock()
+            except Exception as e:
+                print(f"Chicharra deshabilitada ({e}); beeps por parlante.")
         self.setWindowTitle('Tanteador PyQt')
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
@@ -130,19 +157,31 @@ class TanteadorWidget(QWidget):
 
 
     def play_sound(self, key):
-        if key.startswith('up'):
-            data = BEEP_UP
-        elif key.startswith('down'):
-            data = BEEP_DOWN
-        else:
-            data = BEEP_RESET
+        tipo = key.split('_')[0]  # 'up_local' -> 'up', 'reset' -> 'reset'
+        # Chicharra y parlante suenan a la vez: cada uno cubre al otro si
+        # falta (chicharra sin conectar, parlante que no se escucha).
+        if self._gpio is not None:
+            threading.Thread(target=self._chicharra, args=(PULSOS[tipo],),
+                             daemon=True).start()
         # aplay lee el wav por stdin. Los beeps entran enteros en el buffer del
         # pipe (~64 KB), así que el write no bloquea la interfaz.
         p = subprocess.Popen(['aplay', '-q'], stdin=subprocess.PIPE,
                              stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)
-        p.stdin.write(data)
+        p.stdin.write(BEEPS[tipo])
         p.stdin.close()
+
+    def _chicharra(self, pulsos):
+        # Corre en un hilo aparte: los sleep no pueden congelar la interfaz.
+        # El lock serializa beeps casi simultáneos (los dos equipos anotando a
+        # la vez): el segundo espera al primero en vez de pisarle el pin.
+        with self._chicharra_lock:
+            for dur, silencio in pulsos:
+                self._gpio.output(CHICHARRA_GPIO, self._gpio.HIGH)
+                time.sleep(dur)
+                self._gpio.output(CHICHARRA_GPIO, self._gpio.LOW)
+                if silencio:
+                    time.sleep(silencio)
 
 
     def paintEvent(self, event):

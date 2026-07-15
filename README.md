@@ -112,6 +112,33 @@ Para actualizar un tanteador ya instalado, ver [ACTUALIZAR.md](ACTUALIZAR.md).
   memoria: no hay archivos de sonido.
 - Muestra el reloj desde el último reset.
 
+## Chicharra de 12 V (opcional)
+
+Los beeps salen por el parlante y, a la vez, por una chicharra de 12 V en
+el pin `CHICHARRA_GPIO` de `tanteador.py` (18 por defecto, pin físico 12),
+con el mismo ritmo. El pin queda activo aunque no haya nada conectado, así
+que enchufar la chicharra no requiere tocar código. Con `None` queda solo
+el parlante.
+
+Hardware: buzzer piezoeléctrico de 12 V de **tono continuo** (~100 dB),
+módulo MOSFET (IRF520 o similar) o módulo relé de 1 canal de 5 V, y una
+fuente de 12 V ≥ 1 A.
+
+Conexión con módulo MOSFET (GPIO 18 = pin físico 12):
+
+```
+Pi pin 12 (GPIO18) ──── SIG    del módulo MOSFET
+Pi pin 6  (GND)    ──── GND    del módulo
+Fuente 12V +       ──── VIN+   del módulo
+Fuente 12V −       ──── VIN−   del módulo
+Chicharra + / −    ──── V+ / V− del módulo
+```
+
+Con módulo relé: VCC al pin 2 (5 V), GND al pin 6, IN al pin 12 (GPIO18);
+el 12 V+ de la fuente a COM, NO al + de la chicharra, y el − de la
+chicharra al − de la fuente. Si la chicharra es electromagnética (bobina),
+poné un diodo 1N4007 en paralelo con ella, en inversa (banda al +).
+
 ## Créditos
 
 - Proyecto y scripts: Diego Graselli (CHACA)

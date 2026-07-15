@@ -5,20 +5,83 @@
 import sys
 import time
 import subprocess
+import io
+import math
+import struct
+import wave
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtGui import QFont, QPainter, QColor, QPen, QLinearGradient, QPolygon
+from PyQt5.QtGui import QFont, QFontMetrics, QPainter, QColor, QPen, QLinearGradient, QPolygon
 from PyQt5.QtCore import Qt, QTimer, QPoint, pyqtSignal
 
 import paho.mqtt.client as mqtt
-import os
 
 # Segundos que un equipo tiene que esperar entre una suma y la siguiente.
 # Subilo a 2 si todavía se cuela algún doble; bajalo si alguna vez bloquea un
 # punto legítimo (no debería: entre tanto y tanto siempre pasan varios segundos).
-COOLDOWN_PUNTO = 1.5
+COOLDOWN_PUNTO = 0.5
 
-# Definición de temas parametrizados
+# Beeps sintetizados en memoria: el tanteador no depende de ningún .wav en la SD.
+SAMPLE_RATE = 44100
+
+def _wav_beep(pulsos, freq):
+    """WAV mono de 16 bits con los pulsos (duración, silencio) en segundos.
+    Rampa de 5 ms en los extremos de cada pulso para que no meta clics."""
+    frames = bytearray()
+    rampa = int(SAMPLE_RATE * 0.005)
+    for dur, silencio in pulsos:
+        n = int(SAMPLE_RATE * dur)
+        for i in range(n):
+            amp = 32000
+            if i < rampa:
+                amp = amp * i // rampa
+            elif i > n - rampa:
+                amp = amp * (n - i) // rampa
+            frames += struct.pack('<h', int(amp * math.sin(2 * math.pi * freq * i / SAMPLE_RATE)))
+        frames += b'\x00\x00' * int(SAMPLE_RATE * silencio)
+    buf = io.BytesIO()
+    with wave.open(buf, 'wb') as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SAMPLE_RATE)
+        w.writeframes(bytes(frames))
+    return buf.getvalue()
+
+# Anotar: un beep largo y fuerte, el mismo para los dos equipos.
+# Retroceder: dos beeps cortitos. Reset: uno grave y más largo.
+BEEP_UP = _wav_beep([(0.30, 0)], 1000)
+BEEP_DOWN = _wav_beep([(0.08, 0.06), (0.08, 0)], 1000)
+BEEP_RESET = _wav_beep([(0.50, 0)], 440)
+
+# Definición de temas parametrizados. El orden importa: es el orden de rotación
+# al cambiar de tema, y el primero es el inicial (los oscuros primero, que son
+# los que se usan en la cancha).
 THEMES = {
+    'universal-bermellon': {
+        'background': (0, 0, 0),
+        'shadow': (15, 15, 15),
+        'num': {
+            'local': {'color': (255, 70, 0), 'font': ('Arial', 0.50, True)},
+            'visita': {'color': (0, 200, 0), 'font': ('Arial', 0.50, True)},
+        },
+        'clock': {'color': (200, 200, 200), 'font': ('Arial', 0.18, True)}
+    },
+    'universal-dark': {
+        'background': (0, 0, 0),
+        'shadow': (15, 15, 15),
+        'num': {
+            'local': {'color': (255, 190, 0), 'font': ('Arial', 0.50, True)},
+            'visita': {'color': (0, 200, 0), 'font': ('Arial', 0.50, True)},
+        },
+        'clock': {'color': (200, 200, 200), 'font': ('Arial', 0.18, True)}
+    },
+    'digital-dark': {
+        'background': (10, 10, 10),
+        'num': {
+            'local': {'color': (255, 190, 0), 'font': ('DS-Digital', 0.58, True)},
+            'visita': {'color': (0, 200, 0), 'font': ('DS-Digital', 0.58, True)},
+        },
+        'clock': {'color': (200, 200, 200), 'font': ('DS-Digital', 0.18, True)}
+    },
     'universal': {
         'background': (255, 255, 255),
         'shadow': (240, 240, 240),
@@ -35,23 +98,6 @@ THEMES = {
             'visita': {'color': (0, 200, 0), 'font': ('DS-Digital', 0.58, True)},
         },
         'clock': {'color': (90, 90, 90), 'font': ('DS-Digital', 0.18, True)}
-    },    
-    'universal-dark': {
-        'background': (0, 0, 0),
-        'shadow': (15, 15, 15),
-        'num': {
-            'local': {'color': (200, 0, 0), 'font': ('Arial', 0.50, True)},
-            'visita': {'color': (0, 200, 0), 'font': ('Arial', 0.50, True)},
-        },
-        'clock': {'color': (200, 200, 200), 'font': ('Arial', 0.18, True)}
-    },
-    'digital-dark': {
-        'background': (10, 10, 10),
-        'num': {
-            'local': {'color': (200, 0, 0), 'font': ('DS-Digital', 0.58, True)},
-            'visita': {'color': (0, 200, 0), 'font': ('DS-Digital', 0.58, True)},
-        },
-        'clock': {'color': (200, 200, 200), 'font': ('DS-Digital', 0.18, True)}
     },
 }
 
@@ -65,13 +111,14 @@ class TanteadorWidget(QWidget):
         super().__init__()
 
         self.scores = {'local': 0, 'visita': 0, 'ultimo': None}
-        self.theme = 'universal-dark'
+        self.theme = 'universal-bermellon'
         self.last_reset = time.time()
-        # Anti doble-punto: si el mismo equipo suma dos veces en menos de
-        # COOLDOWN_PUNTO segundos, la segunda se ignora. En pelota no hay dos
-        # tantos tan seguidos, así que esto solo tapa el doble apretón del botón.
-        # Las restas nunca se limitan: una corrección tiene que entrar siempre.
+        # Anti doble-punto: si el mismo equipo suma (o resta) dos veces en menos
+        # de COOLDOWN_PUNTO segundos, la segunda se ignora: tapa el doble
+        # apretón del botón. Sumas y restas se registran por separado, así una
+        # corrección (resta justo después de una suma) entra siempre.
         self.last_up = {'local': 0.0, 'visita': 0.0}
+        self.last_down = {'local': 0.0, 'visita': 0.0}
         self.setWindowTitle('Tanteador PyQt')
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
@@ -83,14 +130,19 @@ class TanteadorWidget(QWidget):
 
 
     def play_sound(self, key):
-        base = os.path.dirname(__file__)
-        for path in (os.path.join(base, 'sonidos', self.theme, f'{key}.wav'),
-                     os.path.join(base, 'sonidos', f'{key}.wav')):
-            if os.path.exists(path):
-                subprocess.Popen(['aplay', '-q', path],
-                                 stdout=subprocess.DEVNULL,
-                                 stderr=subprocess.DEVNULL)
-                return
+        if key.startswith('up'):
+            data = BEEP_UP
+        elif key.startswith('down'):
+            data = BEEP_DOWN
+        else:
+            data = BEEP_RESET
+        # aplay lee el wav por stdin. Los beeps entran enteros en el buffer del
+        # pipe (~64 KB), así que el write no bloquea la interfaz.
+        p = subprocess.Popen(['aplay', '-q'], stdin=subprocess.PIPE,
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        p.stdin.write(data)
+        p.stdin.close()
 
 
     def paintEvent(self, event):
@@ -125,21 +177,10 @@ class TanteadorWidget(QWidget):
         # Panel visita
         panel_x_visita = int(w * 0.53)
         qp.drawRoundedRect(panel_x_visita, panel_y, panel_w, panel_h, panel_radius, panel_radius)
-        # Borde indicador del último que anotó
-        border_width = max(12, int(h * 0.035))
+        # Indicador del último que anotó
         ultimo = self.scores['ultimo']
         if ultimo in ('local', 'visita'):
             color = QColor(*theme['num'][ultimo]['color'])
-            panel_x = panel_x_local if ultimo == 'local' else panel_x_visita
-            # El trazo se dibuja centrado sobre el rectángulo, así que hay que
-            # meterlo media pluma hacia adentro: si no, con este grosor el borde
-            # de arriba se comería el margen superior.
-            half = border_width // 2
-            qp.setPen(QPen(color, border_width))
-            qp.setBrush(Qt.NoBrush)
-            qp.drawRoundedRect(panel_x + half, panel_y + half,
-                               panel_w - border_width, panel_h - border_width,
-                               panel_radius, panel_radius)
             # Flecha hacia arriba debajo del panel. Va pegada al borde exterior
             # (izquierda para local, derecha para visita) porque el reloj está
             # centrado y a esta altura: por el medio se pisarían.
@@ -173,6 +214,12 @@ class TanteadorWidget(QWidget):
         shadow_color = QColor(0, 0, 0, 180)
         font_num_local = QFont(theme['num']['local']['font'][0], int(h * theme['num']['local']['font'][1]), QFont.Bold if theme['num']['local']['font'][2] else QFont.Normal)
         font_num_visita = QFont(theme['num']['visita']['font'][0], int(h * theme['num']['visita']['font'][1]), QFont.Bold if theme['num']['visita']['font'][2] else QFont.Normal)
+        # Con tamaño fijo, tanteos anchos (18, 29, tres cifras) no entran en el
+        # rectángulo y drawText los recorta: se achica la fuente solo cuando hace
+        # falta, descontando la pluma de la sombra que engorda cada trazo.
+        max_num_w = int(w * 0.4) - max(7, int(h * 0.035)) * 2
+        font_num_local = self._encoger_hasta_entrar(font_num_local, str(self.scores['local']), max_num_w)
+        font_num_visita = self._encoger_hasta_entrar(font_num_visita, str(self.scores['visita']), max_num_w)
         # Sombra local
         qp.setFont(font_num_local)
         qp.setPen(QPen(shadow_color, max(7, int(h * 0.035))))
@@ -189,33 +236,44 @@ class TanteadorWidget(QWidget):
         qp.setPen(QPen(QColor(*theme['num']['visita']['color']), 1))
         qp.drawText(int(w * 0.55), num_y, int(w * 0.4), int(h * 0.62), Qt.AlignCenter, str(self.scores['visita']))
 
-    def _suma_permitida(self, equipo):
-        """True si pasó el cooldown desde la última suma de ese equipo."""
+    def _encoger_hasta_entrar(self, font, texto, max_w):
+        """Achica la fuente de a poco hasta que el texto entre en max_w píxeles."""
+        while font.pointSize() > 10 and QFontMetrics(font).horizontalAdvance(texto) > max_w:
+            font.setPointSize(font.pointSize() - 2)
+        return font
+
+    def _accion_permitida(self, equipo, ultimos):
+        """True si pasó el cooldown desde la última acción de ese equipo en
+        el registro dado (last_up o last_down)."""
         ahora = time.time()
-        if ahora - self.last_up[equipo] < COOLDOWN_PUNTO:
+        if ahora - ultimos[equipo] < COOLDOWN_PUNTO:
             return False
-        self.last_up[equipo] = ahora
+        ultimos[equipo] = ahora
         return True
 
     def handle_event(self, topic):
         # Corre siempre en el hilo gráfico (ver mqtt_event).
         sound = None
         if topic == 'team1/up':
-            if not self._suma_permitida('local'):
+            if not self._accion_permitida('local', self.last_up):
                 return
             self.scores['local'] = min(99, self.scores['local'] + 1)
             self.scores['ultimo'] = 'local'
             sound = 'up_local'
         elif topic == 'team1/down':
+            if not self._accion_permitida('local', self.last_down):
+                return
             self.scores['local'] = max(0, self.scores['local'] - 1)
             sound = 'down_local'
         elif topic == 'team2/up':
-            if not self._suma_permitida('visita'):
+            if not self._accion_permitida('visita', self.last_up):
                 return
             self.scores['visita'] = min(99, self.scores['visita'] + 1)
             self.scores['ultimo'] = 'visita'
             sound = 'up_visita'
         elif topic == 'team2/down':
+            if not self._accion_permitida('visita', self.last_down):
+                return
             self.scores['visita'] = max(0, self.scores['visita'] - 1)
             sound = 'down_visita'
         elif topic == 'reset':

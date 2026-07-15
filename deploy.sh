@@ -64,8 +64,6 @@ fi
 
 echo "📦 Sincronizando archivos..."
 rsync -av $DRY "${ARCHIVOS[@]}" "$HOST:$DEST/"
-# --delete solo en sonidos/: si borrás un tema acá, se borra allá.
-rsync -av $DRY --delete sonidos/ "$HOST:$DEST/sonidos/"
 
 if [ -n "$DRY" ]; then
     echo "🔍 Nada más que hacer en modo --check."
@@ -95,7 +93,6 @@ if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
     trap 'echo "🔒 Devolviendo la SD a solo lectura..."; ssh "$HOST" "sudo mount -o remount,ro $LOWER" || true' EXIT
 
     rsync -a --rsync-path="sudo rsync" "${ARCHIVOS[@]}" "$HOST:$LOWER$DEST/"
-    rsync -a --rsync-path="sudo rsync" --delete sonidos/ "$HOST:$LOWER$DEST/sonidos/"
     for unit in "${UNITS[@]}"; do
         scp -q "$unit" "$HOST:/tmp/$unit"
         # No alcanza con copiar el unit: 'systemctl enable' crea un symlink en

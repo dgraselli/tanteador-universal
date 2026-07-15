@@ -42,12 +42,6 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 │       ├── tanteador_remoto_LOLIN.ino
 │       └── credentials.h.example
 ├── fonts/                       # Fuentes digitales (DS-Digital, Dimitri, etc)
-├── sonidos/                     # Sonidos por evento y tema
-│   ├── descargar_sonidos.py     # Script para descargar/convertir sonidos
-│   ├── digital/                 # Sonidos para tema digital
-│   ├── digital-dark/            # Sonidos para tema digital oscuro
-│   ├── universal/               # Sonidos para tema universal
-│   └── universal-dark/          # Sonidos para tema universal oscuro
 ├── SDCARD/                      # Imágenes de SD (no versionadas)
 ```
 
@@ -76,7 +70,7 @@ Para el control remoto:
 - Python 3.x
 - PyQt5
 - paho-mqtt
-- aplay (Linux, para reproducir sonidos)
+- aplay (Linux, para reproducir los beeps)
 - Fuentes digitales instaladas en el sistema (DS-Digital, Dimitri, etc)
 - Broker MQTT (ej: Mosquitto)
 
@@ -113,7 +107,10 @@ Para actualizar un tanteador ya instalado, ver [ACTUALIZAR.md](ACTUALIZAR.md).
 - Pulsación corta: suma punto. Pulsación larga: resta punto.
 - Pulsación larga en botón RESET: reinicia el tanteador.
 - Pulsación simultánea de ambos botones: cambia el tema visual.
-- El tanteador reproduce sonidos y muestra el reloj desde el último reset.
+- El tanteador emite un beep al anotar (el mismo para ambos equipos), dos beeps
+  cortos al retroceder y uno grave al resetear. Los beeps se sintetizan en
+  memoria: no hay archivos de sonido.
+- Muestra el reloj desde el último reset.
 
 ## Créditos
 

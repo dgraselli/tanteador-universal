@@ -13,6 +13,7 @@
 import io
 import json
 import math
+import os
 import struct
 import subprocess
 import sys
@@ -55,15 +56,25 @@ def _wav_beep(pulsos, freq):
 
 WAVS = {
     'silencio': _wav_beep([(1.0, 0)], 0),
-    # Igual al beep de anotar, con el mismo colchón de silencio inicial que
-    # tanteador.py: el monitor tarda unas décimas en abrir el audio HDMI.
-    'beep': _wav_beep([(0, 0.4), (0.30, 0)], 1000),
+    'beep': _wav_beep([(0.30, 0)], 1000),   # igual al beep de anotar
 }
 
 # Una prueba a la vez: un doble toque en el celular no encima dos aplay.
 _lock = threading.Lock()
 
 def _aplay(nombre):
+    # Con el daemon de audio corriendo (silencio.service), el sonido sale por
+    # su FIFO: el canal HDMI ya está abierto y además el dispositivo es suyo
+    # (un aplay directo daría "device busy").
+    try:
+        fd = os.open('/run/tnt/beeps', os.O_WRONLY | os.O_NONBLOCK)
+        try:
+            os.write(fd, f'{nombre}\n'.encode())
+        finally:
+            os.close(fd)
+        return 'enviado al daemon de audio (canal HDMI siempre abierto)'
+    except OSError:
+        pass  # el daemon no está: aplay directo
     p = subprocess.run(['aplay', '-q'], input=WAVS[nombre],
                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                        timeout=10)

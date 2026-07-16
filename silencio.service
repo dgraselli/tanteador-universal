@@ -1,0 +1,18 @@
+[Unit]
+Description=Daemon de audio: canal HDMI siempre abierto, beeps por FIFO
+# Sin esto, el monitor cierra el audio entre beep y beep, y al reabrirlo se
+# come el arranque del sonido (retardo y fade-in). Ver silencio.py.
+After=multi-user.target
+
+[Service]
+Type=simple
+User=chaca
+# Crea /run/tnt (dueño chaca) para el FIFO por el que llegan los beeps.
+RuntimeDirectory=tnt
+WorkingDirectory=/home/chaca/tnt
+ExecStart=/usr/bin/python3 /home/chaca/tnt/silencio.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

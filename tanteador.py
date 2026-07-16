@@ -2,6 +2,7 @@
 # Servidor de tanteador con interfaz gráfica PyQt5 y consumo MQTT
 # Requiere: pip install PyQt5 paho-mqtt
 
+import os
 import sys
 import time
 import subprocess
@@ -36,14 +37,13 @@ PULSOS = {
     'reset': [(0.50, 0)],
 }
 
+# FIFO del daemon de audio (silencio.service): tiene el canal HDMI siempre
+# abierto, así los beeps salen enteros y al instante. Si el daemon no está,
+# el beep cae solo a un aplay directo.
+FIFO_AUDIO = '/run/tnt/beeps'
+
 # Beeps sintetizados en memoria: el tanteador no depende de ningún .wav en la SD.
 SAMPLE_RATE = 44100
-
-# Colchón de silencio antes de cada beep. El monitor tarda unas décimas en
-# abrir el audio cuando arranca el stream HDMI, y sin esto los beeps cortos
-# terminan antes de que se escuche nada. Subilo si un beep sigue llegando
-# cortado; la chicharra por GPIO no lo necesita y suena al instante.
-SILENCIO_PREVIO = 0.4
 
 def _wav_beep(pulsos, freq):
     """WAV mono de 16 bits con los pulsos (duración, silencio) en segundos.
@@ -68,10 +68,7 @@ def _wav_beep(pulsos, freq):
         w.writeframes(bytes(frames))
     return buf.getvalue()
 
-# El pulso de duración 0 mete el colchón de silencio inicial sin tocar el
-# ritmo: la chicharra usa PULSOS pelado y no se entera.
-BEEPS = {tipo: _wav_beep([(0, SILENCIO_PREVIO)] + pulsos,
-                         440 if tipo == 'reset' else 1000)
+BEEPS = {tipo: _wav_beep(pulsos, 440 if tipo == 'reset' else 1000)
          for tipo, pulsos in PULSOS.items()}
 
 # Definición de temas parametrizados. El orden importa: es el orden de rotación
@@ -172,6 +169,19 @@ class TanteadorWidget(QWidget):
         if self._gpio is not None:
             threading.Thread(target=self._chicharra, args=(PULSOS[tipo],),
                              daemon=True).start()
+        # Primero el daemon de audio, que tiene el canal HDMI siempre abierto
+        # (sin él, el monitor abre el audio con retardo y fade-in y se come
+        # los beeps cortos). O_NONBLOCK: si no hay nadie leyendo, falla al
+        # toque en vez de congelar la interfaz.
+        try:
+            fd = os.open(FIFO_AUDIO, os.O_WRONLY | os.O_NONBLOCK)
+            try:
+                os.write(fd, f'{tipo}\n'.encode())
+            finally:
+                os.close(fd)
+            return
+        except OSError:
+            pass  # el daemon no está: aplay directo, como siempre
         # aplay lee el wav por stdin. Los beeps entran enteros en el buffer del
         # pipe (~64 KB), así que el write no bloquea la interfaz.
         p = subprocess.Popen(['aplay', '-q'], stdin=subprocess.PIPE,

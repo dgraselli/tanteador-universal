@@ -8,6 +8,7 @@ a la Raspberry y al control remoto.
 | Dónde | Qué | Cómo se actualiza |
 |---|---|---|
 | Raspberry Pi | `tanteador.py` | `./deploy.sh` desde la notebook |
+| Raspberry Pi | `silencio.py` (daemon de audio) y `pruebas.py` (páginas de diagnóstico) | `./deploy.sh` desde la notebook |
 | Raspberry Pi | AP WiFi (`hostapd`, `dnsmasq`) | editando `/etc/hostapd/hostapd.conf` a mano |
 | Wemos D1 Mini | firmware `.ino` | por WiFi (OTA), o por USB la primera vez |
 

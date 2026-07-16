@@ -23,8 +23,8 @@ LOWER="/media/root-ro"      # la SD real, cuando el overlay está activo
 DRY=""
 PERSIST=1
 
-ARCHIVOS=(tanteador.py splash.py splash.conf)
-UNITS=(tanteador.service splash.service)
+ARCHIVOS=(tanteador.py splash.py splash.conf pruebas.py)
+UNITS=(tanteador.service splash.service pruebas.service)
 
 for arg in "$@"; do
     case "$arg" in
@@ -122,6 +122,9 @@ if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
         exit 1
     fi
 fi
+
+echo "🔄 Reiniciando la página de pruebas..."
+ssh "$HOST" 'sudo systemctl reset-failed pruebas 2>/dev/null; sudo systemctl restart pruebas'
 
 echo "🔄 Reiniciando el tanteador..."
 # reset-failed: si el servicio viejo agotó sus reintentos, systemd lo deja en

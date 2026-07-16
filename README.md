@@ -139,6 +139,17 @@ el 12 V+ de la fuente a COM, NO al + de la chicharra, y el − de la
 chicharra al − de la fuente. Si la chicharra es electromagnética (bobina),
 poné un diodo 1N4007 en paralelo con ella, en inversa (banda al +).
 
+## Página de pruebas desde el celular
+
+La Pi sirve una página en `http://192.168.216.1` (conectado a la red `TNT`)
+con un botón por prueba, para diagnosticar el monitor sin notebook: abrir el
+audio HDMI en silencio, sonar el beep de un punto sin sumar nada, y pulsar la
+chicharra sin audio. La sirve `pruebas.py` (servicio `pruebas.service`), que
+se despliega con `./deploy.sh` como todo lo demás.
+
+Si el celular avisa "esta red no tiene internet", elegí mantener la conexión:
+la página vive adentro de la red.
+
 ## Créditos
 
 - Proyecto y scripts: Diego Graselli (CHACA)

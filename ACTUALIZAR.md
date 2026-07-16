@@ -304,6 +304,10 @@ con la clave vieja.
 
 ## Diagnóstico rápido
 
+Sin notebook: conectá el celular a la red `TNT` y abrí `http://192.168.216.1`.
+Es la página de pruebas del monitor (audio HDMI en silencio, beep, chicharra),
+pensada para disparar cada prueba mirando la pantalla.
+
 ```bash
 # ¿está corriendo el tanteador?
 ssh chaca@192.168.216.1 'systemctl status tanteador'

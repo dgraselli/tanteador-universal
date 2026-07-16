@@ -217,7 +217,10 @@ Apretá los botones y comprobá:
 Sobre el RSSI: de −30 a −60 dBm es excelente; de −60 a −70 está bien; de −70 a
 −80 es marginal y se va a cortar a ratos; peor que −85 dBm no hay enlace.
 
-Para medirlo a lo largo de la cancha, dejá la notebook al lado del tablero y:
+Para medirlo a lo largo de la cancha hay dos maneras. Sin notebook: celular a
+la red `TNT`, abrí `http://192.168.216.1/senal`, caminá la cancha con el
+control encendido y marcá cada punto desde la página (no suma tantos). O con
+la notebook al lado del tablero:
 
 ```bash
 ./medir-senal.sh 180        # mide 3 minutos

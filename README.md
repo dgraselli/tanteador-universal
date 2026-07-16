@@ -141,11 +141,19 @@ poné un diodo 1N4007 en paralelo con ella, en inversa (banda al +).
 
 ## Página de pruebas desde el celular
 
-La Pi sirve una página en `http://192.168.216.1` (conectado a la red `TNT`)
-con un botón por prueba, para diagnosticar el monitor sin notebook: abrir el
-audio HDMI en silencio, sonar el beep de un punto sin sumar nada, y pulsar la
-chicharra sin audio. La sirve `pruebas.py` (servicio `pruebas.service`), que
-se despliega con `./deploy.sh` como todo lo demás.
+La Pi sirve dos páginas (conectado a la red `TNT`), pensadas para diagnosticar
+sin notebook:
+
+- `http://192.168.216.1` — pruebas del monitor: abrir el audio HDMI en
+  silencio, sonar el beep de un punto sin sumar nada, y pulsar la chicharra
+  sin audio.
+- `http://192.168.216.1/senal` — señal del control remoto en vivo, la versión
+  para celular de `medir-senal.sh`: caminás la cancha con el control y el
+  celular, marcás cada punto desde la página (sin sumar tantos) y al final
+  tenés peor/mejor/media por punto.
+
+Las sirve `pruebas.py` (servicio `pruebas.service`), que se despliega con
+`./deploy.sh` como todo lo demás.
 
 Si el celular avisa "esta red no tiene internet", elegí mantener la conexión:
 la página vive adentro de la red.

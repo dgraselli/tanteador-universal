@@ -160,6 +160,20 @@ class TanteadorWidget(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(1000)
+        # Si X arranca antes de que el monitor negocie el EDID (pasa en cada
+        # encendido del tablero: se prende todo junto), el fullscreen se hace
+        # contra una pantalla que todavía no existe y la ventana queda de 1x1:
+        # tablero negro hasta reiniciar el servicio. Este vigía la reestira en
+        # cuanto la pantalla real aparece (o cambia: monitor enchufado después).
+        self.fs_timer = QTimer(self)
+        self.fs_timer.timeout.connect(self._vigilar_fullscreen)
+        self.fs_timer.start(5000)
+
+    def _vigilar_fullscreen(self):
+        pantalla = QApplication.primaryScreen()
+        if pantalla and self.geometry() != pantalla.geometry():
+            self.setGeometry(pantalla.geometry())
+            self.showFullScreen()
 
 
     def play_sound(self, key):

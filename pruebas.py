@@ -55,7 +55,9 @@ def _wav_beep(pulsos, freq):
 
 WAVS = {
     'silencio': _wav_beep([(1.0, 0)], 0),
-    'beep': _wav_beep([(0.30, 0)], 1000),   # igual al beep de anotar
+    # Igual al beep de anotar, con el mismo colchón de silencio inicial que
+    # tanteador.py: el monitor tarda unas décimas en abrir el audio HDMI.
+    'beep': _wav_beep([(0, 0.4), (0.30, 0)], 1000),
 }
 
 # Una prueba a la vez: un doble toque en el celular no encima dos aplay.

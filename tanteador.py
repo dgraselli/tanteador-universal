@@ -39,6 +39,12 @@ PULSOS = {
 # Beeps sintetizados en memoria: el tanteador no depende de ningún .wav en la SD.
 SAMPLE_RATE = 44100
 
+# Colchón de silencio antes de cada beep. El monitor tarda unas décimas en
+# abrir el audio cuando arranca el stream HDMI, y sin esto los beeps cortos
+# terminan antes de que se escuche nada. Subilo si un beep sigue llegando
+# cortado; la chicharra por GPIO no lo necesita y suena al instante.
+SILENCIO_PREVIO = 0.4
+
 def _wav_beep(pulsos, freq):
     """WAV mono de 16 bits con los pulsos (duración, silencio) en segundos.
     Rampa de 5 ms en los extremos de cada pulso para que no meta clics."""
@@ -62,7 +68,10 @@ def _wav_beep(pulsos, freq):
         w.writeframes(bytes(frames))
     return buf.getvalue()
 
-BEEPS = {tipo: _wav_beep(pulsos, 440 if tipo == 'reset' else 1000)
+# El pulso de duración 0 mete el colchón de silencio inicial sin tocar el
+# ritmo: la chicharra usa PULSOS pelado y no se entera.
+BEEPS = {tipo: _wav_beep([(0, SILENCIO_PREVIO)] + pulsos,
+                         440 if tipo == 'reset' else 1000)
          for tipo, pulsos in PULSOS.items()}
 
 # Definición de temas parametrizados. El orden importa: es el orden de rotación

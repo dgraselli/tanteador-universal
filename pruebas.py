@@ -64,7 +64,17 @@ def _aplay(nombre):
                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                        timeout=10)
     if p.returncode != 0:
-        raise RuntimeError(p.stderr.decode(errors='replace').strip() or 'aplay falló')
+        err = p.stderr.decode(errors='replace').strip()
+        # 524 (ENOTSUPP): el driver vc4-hdmi no ofrece audio porque el monitor
+        # no declaró soportarlo. Con un EDID que llega corrupto, pasa aunque el
+        # monitor sí tenga audio: es un síntoma más del enlace HDMI fallado.
+        if 'error 524' in err:
+            raise RuntimeError('el HDMI quedó SIN AUDIO en este arranque: el '
+                               'driver no le leyó soporte de audio al monitor '
+                               '(EDID corrupto). Los beeps del tanteador '
+                               'tampoco están sonando. Dato importante: '
+                               'anotalo junto con la hora.')
+        raise RuntimeError(err or 'aplay falló')
     return 'sonó por el parlante (HDMI)'
 
 def _chicharra():

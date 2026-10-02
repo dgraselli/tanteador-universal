@@ -8,7 +8,9 @@ User=chaca
 WorkingDirectory=/home/chaca/tnt
 ExecStart=/usr/bin/python3 /home/chaca/tnt/pruebas.py
 # Puerto 80 sin ser root: así en el celular alcanza con http://192.168.216.1
-AmbientCapabilities=CAP_NET_BIND_SERVICE
+# CAP_SYS_TIME: el celular pone la Pi en hora al abrir las páginas (no tiene
+# reloj propio ni internet), y sin hora no hay historial por fecha.
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SYS_TIME
 Restart=always
 RestartSec=2
 

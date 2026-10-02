@@ -1,0 +1,17 @@
+[Unit]
+Description=Pendrive de la bitácora del tablero (etiqueta TNTLOG)
+# Fuera del overlay de solo lectura: lo que se escribe acá sobrevive al
+# apagado. Ver registro.py. Si el pendrive no está, el tablero arranca igual
+# y la bitácora cae a RAM.
+
+[Mount]
+What=/dev/disk/by-label/TNTLOG
+Where=/media/tntlog
+Type=ext4
+# nofail: sin pendrive no se traba el arranque. commit=5: ext4 baja a la
+# memoria USB cada 5 s como máximo (igual registro.py hace fsync por evento).
+Options=noatime,nofail,commit=5
+TimeoutSec=20
+
+[Install]
+WantedBy=multi-user.target

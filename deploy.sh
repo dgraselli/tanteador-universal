@@ -23,8 +23,11 @@ LOWER="/media/root-ro"      # la SD real, cuando el overlay está activo
 DRY=""
 PERSIST=1
 
-ARCHIVOS=(tanteador.py splash.py splash.conf pruebas.py silencio.py)
-UNITS=(tanteador.service splash.service pruebas.service silencio.service)
+ARCHIVOS=(tanteador.py splash.py splash.conf pruebas.py silencio.py registro.py historial.py botones.py)
+UNITS=(tanteador.service splash.service pruebas.service media-tntlog.mount botones.service)
+# Servicios que tienen que quedar deshabilitados (en RAM y en la SD).
+# silencio.service: el audio por HDMI está apagado (PARLANTE en tanteador.py).
+APAGADOS=(silencio.service)
 
 for arg in "$@"; do
     case "$arg" in
@@ -89,7 +92,13 @@ done
 if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
     echo "💾 Escribiendo en la SD (la remonto en escritura un momento)..."
     # El trap la deja en solo lectura pase lo que pase.
-    ssh "$HOST" "sudo mount -o remount,rw $LOWER"
+    # En esta Pi, el remount suele responder "mount point is busy" aunque el
+    # kernel sí la remonte: no se le cree al código de salida, se mira el estado.
+    ssh "$HOST" "sudo mount -o remount,rw $LOWER" 2>/dev/null || true
+    if [ "$(ssh "$HOST" "findmnt -no OPTIONS $LOWER" | cut -d, -f1)" != "rw" ]; then
+        echo "❌ No pude abrir la SD en escritura. Reiniciá la Pi y volvé a correr el deploy."
+        exit 1
+    fi
     trap 'echo "🔒 Devolviendo la SD a solo lectura..."; ssh "$HOST" "sudo mount -o remount,ro $LOWER" || true' EXIT
 
     rsync -a --rsync-path="sudo rsync" "${ARCHIVOS[@]}" "$HOST:$LOWER$DEST/"
@@ -103,10 +112,18 @@ if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
                      sudo mkdir -p $LOWER$SYSTEMD/$WANTED.wants && \
                      sudo ln -sf $SYSTEMD/$unit $LOWER$SYSTEMD/$WANTED.wants/$unit"
     done
+    for unit in "${APAGADOS[@]}"; do
+        ssh "$HOST" "sudo rm -f $LOWER$SYSTEMD/*.wants/$unit"
+    done
     ssh "$HOST" "sudo chown -R chaca:chaca $LOWER$DEST && sync"
 
-    ssh "$HOST" "sudo mount -o remount,ro $LOWER"
     trap - EXIT
+    ssh "$HOST" "sudo mount -o remount,ro $LOWER" 2>/dev/null || true
+    if [ "$(ssh "$HOST" "findmnt -no OPTIONS $LOWER" | cut -d, -f1)" != "ro" ]; then
+        # Lo grabado ya está en la SD (hubo sync); solo queda abierta. Un
+        # reinicio la vuelve a solo lectura.
+        SD_ABIERTA=1
+    fi
 
     # Escribir el unit en la capa de abajo le cambia la fecha al de la vista
     # combinada, y systemd se queja si no le avisamos.
@@ -123,11 +140,20 @@ if [ "$OVERLAY" = "1" ] && [ "$PERSIST" = "1" ]; then
     fi
 fi
 
+echo "💾 Montando el pendrive de la bitácora..."
+ssh "$HOST" 'sudo systemctl start media-tntlog.mount' \
+    || echo "⚠️  Sin pendrive TNTLOG: la bitácora queda en RAM hasta el reboot."
+
 echo "🔄 Reiniciando la página de pruebas..."
 ssh "$HOST" 'sudo systemctl reset-failed pruebas 2>/dev/null; sudo systemctl restart pruebas'
 
-echo "🔄 Reiniciando el audio (silencio.service)..."
-ssh "$HOST" 'sudo systemctl reset-failed silencio 2>/dev/null; sudo systemctl restart silencio'
+for unit in "${APAGADOS[@]}"; do
+    echo "🔇 Deshabilitando $unit..."
+    ssh "$HOST" "sudo systemctl disable --now $unit 2>/dev/null; true"
+done
+
+echo "🔄 Reiniciando el control cableado..."
+ssh "$HOST" 'sudo systemctl reset-failed botones 2>/dev/null; sudo systemctl restart botones'
 
 echo "🔄 Reiniciando el tanteador..."
 # reset-failed: si el servicio viejo agotó sus reintentos, systemd lo deja en
@@ -142,4 +168,9 @@ else
     exit 1
 fi
 
+if [ "${SD_ABIERTA:-0}" = "1" ]; then
+    echo "⚠️  La SD quedó en escritura (el remount a solo lectura falló, pasa en"
+    echo "   esta Pi). Lo grabado está a salvo; reiniciá la Pi para cerrarla:"
+    echo "   ssh $HOST 'sudo systemctl reboot'"
+fi
 echo "🎉 Listo."

@@ -17,16 +17,34 @@ from PyQt5.QtCore import Qt, QTimer, QPoint, pyqtSignal
 
 import paho.mqtt.client as mqtt
 
+from registro import Registro
+
 # Segundos que un equipo tiene que esperar entre una suma y la siguiente.
 # Subilo a 2 si todavía se cuela algún doble; bajalo si alguna vez bloquea un
 # punto legítimo (no debería: entre tanto y tanto siempre pasan varios segundos).
 COOLDOWN_PUNTO = 0.5
+
+# Si el reloj de un segundo llega con más atraso que esto, la interfaz estuvo
+# trabada y queda anotado en la bitácora (registro.py).
+TRABADO_SEG = 1.5
 
 # Pin BCM donde está (o va a estar) la chicharra de 12 V, vía MOSFET o relé.
 # Los beeps salen por la chicharra Y por el parlante a la vez, con el mismo
 # ritmo: queda activo aunque no haya nada conectado (el pin suena al aire),
 # así conectar la chicharra no requiere tocar código. None = solo parlante.
 CHICHARRA_GPIO = 18  # pin físico 12
+
+# Apagada a propósito (octubre 2026): una semana sin ningún sonido, para
+# descartar la chicharra como causa de los cuelgues en la cancha. El pin se
+# sigue tomando y queda en LOW: suelto, flotaría y según el módulo la
+# chicharra podría quedar sonando. Para volver a encenderla: True.
+CHICHARRA = False
+
+# Beeps también por el parlante del monitor (audio HDMI). Deshabilitado: con
+# el cable/adaptador HDMI marginal, abrir el audio perturba el enlace, y la
+# chicharra ya cubre el aviso. En True, los beeps vuelven a salir por el
+# daemon de audio (silencio.service, que también hay que habilitar).
+PARLANTE = False
 
 # Ritmo de cada evento: lista de (duración, silencio posterior) en segundos.
 # Anotar: un beep largo y fuerte, el mismo para los dos equipos.
@@ -123,8 +141,9 @@ THEMES = {
 class TanteadorWidget(QWidget):
 
     # Los mensajes MQTT llegan en el hilo de red de paho. Esta señal los cruza
-    # al hilo gráfico, único que puede tocar el widget y repintar.
-    mqtt_event = pyqtSignal(str)
+    # al hilo gráfico, único que puede tocar el widget y repintar. Viajan con
+    # la hora de llegada (monotonic), para medir cuánto esperó cada toque.
+    mqtt_event = pyqtSignal(str, float)
 
     def __init__(self):
         super().__init__()
@@ -138,6 +157,8 @@ class TanteadorWidget(QWidget):
         # corrección (resta justo después de una suma) entra siempre.
         self.last_up = {'local': 0.0, 'visita': 0.0}
         self.last_down = {'local': 0.0, 'visita': 0.0}
+        self.registro = Registro('tanteador')
+        self.registro.anotar('arranque', tema=self.theme)
         # Chicharra por GPIO, si está configurada. Si RPi.GPIO no está o el
         # pin no se puede tomar, los beeps caen al parlante: un problema de
         # GPIO no puede dejar el tanteador sin arrancar.
@@ -158,7 +179,8 @@ class TanteadorWidget(QWidget):
         self.setCursor(Qt.BlankCursor)
         self.mqtt_event.connect(self.handle_event)
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update)
+        self.timer.timeout.connect(self._tic)
+        self._ultimo_tic = time.monotonic()
         self.timer.start(1000)
         # Si X arranca antes de que el monitor negocie el EDID (pasa en cada
         # encendido del tablero: se prende todo junto), el fullscreen se hace
@@ -169,9 +191,21 @@ class TanteadorWidget(QWidget):
         self.fs_timer.timeout.connect(self._vigilar_fullscreen)
         self.fs_timer.start(5000)
 
+    def _tic(self):
+        # El reloj del tablero de paso mide si la interfaz se traba: si este
+        # timer de 1 s llega muy tarde, el hilo gráfico estuvo ocupado.
+        ahora = time.monotonic()
+        atraso = ahora - self._ultimo_tic - 1
+        self._ultimo_tic = ahora
+        if atraso > TRABADO_SEG:
+            self.registro.anotar('trabado', seg=round(atraso, 1))
+        self.update()
+
     def _vigilar_fullscreen(self):
         pantalla = QApplication.primaryScreen()
         if pantalla and self.geometry() != pantalla.geometry():
+            g = pantalla.geometry()
+            self.registro.anotar('pantalla', ancho=g.width(), alto=g.height())
             self.setGeometry(pantalla.geometry())
             self.showFullScreen()
 
@@ -180,9 +214,11 @@ class TanteadorWidget(QWidget):
         tipo = key.split('_')[0]  # 'up_local' -> 'up', 'reset' -> 'reset'
         # Chicharra y parlante suenan a la vez: cada uno cubre al otro si
         # falta (chicharra sin conectar, parlante que no se escucha).
-        if self._gpio is not None:
+        if self._gpio is not None and CHICHARRA:
             threading.Thread(target=self._chicharra, args=(PULSOS[tipo],),
                              daemon=True).start()
+        if not PARLANTE:
+            return
         # Primero el daemon de audio, que tiene el canal HDMI siempre abierto
         # (sin él, el monitor abre el audio con retardo y fade-in y se come
         # los beeps cortos). O_NONBLOCK: si no hay nadie leyendo, falla al
@@ -323,32 +359,44 @@ class TanteadorWidget(QWidget):
         ultimos[equipo] = ahora
         return True
 
-    def handle_event(self, topic):
+    def handle_event(self, topic, llegada):
         # Corre siempre en el hilo gráfico (ver mqtt_event).
+        cola_ms = round((time.monotonic() - llegada) * 1000)
         sound = None
+        evento = None  # lo que va a la bitácora: (tipo, datos)
         if topic == 'team1/up':
             if not self._accion_permitida('local', self.last_up):
+                self.registro.anotar('ignorado', eq='local', d=1, cola_ms=cola_ms)
                 return
             self.scores['local'] = min(99, self.scores['local'] + 1)
             self.scores['ultimo'] = 'local'
             sound = 'up_local'
+            evento = ('punto', {'eq': 'local', 'd': 1})
         elif topic == 'team1/down':
             if not self._accion_permitida('local', self.last_down):
+                self.registro.anotar('ignorado', eq='local', d=-1, cola_ms=cola_ms)
                 return
             self.scores['local'] = max(0, self.scores['local'] - 1)
             sound = 'down_local'
+            evento = ('punto', {'eq': 'local', 'd': -1})
         elif topic == 'team2/up':
             if not self._accion_permitida('visita', self.last_up):
+                self.registro.anotar('ignorado', eq='visita', d=1, cola_ms=cola_ms)
                 return
             self.scores['visita'] = min(99, self.scores['visita'] + 1)
             self.scores['ultimo'] = 'visita'
             sound = 'up_visita'
+            evento = ('punto', {'eq': 'visita', 'd': 1})
         elif topic == 'team2/down':
             if not self._accion_permitida('visita', self.last_down):
+                self.registro.anotar('ignorado', eq='visita', d=-1, cola_ms=cola_ms)
                 return
             self.scores['visita'] = max(0, self.scores['visita'] - 1)
             sound = 'down_visita'
+            evento = ('punto', {'eq': 'visita', 'd': -1})
         elif topic == 'reset':
+            # El marcador con que terminó el partido, antes de borrarlo.
+            evento = ('reset', {'l': self.scores['local'], 'v': self.scores['visita']})
             self.scores['local'] = 0
             self.scores['visita'] = 0
             self.scores['ultimo'] = None
@@ -363,14 +411,21 @@ class TanteadorWidget(QWidget):
             else:
                 self.theme = theme_names[0]
             print(f"Cambiando tema a: {self.theme}")
+            evento = ('tema', {'tema': self.theme})
         else:
             return
 
         # Primero el número en pantalla, después el sonido: lanzar aplay cuesta
         # unos cuantos ms y el jugador no debe esperarlos para ver su punto.
+        t0 = time.monotonic()
         self.repaint()
+        pintar_ms = round((time.monotonic() - t0) * 1000)
         if sound:
             self.play_sound(sound)
+        tipo, datos = evento
+        if tipo == 'punto':
+            datos.update(l=self.scores['local'], v=self.scores['visita'])
+        self.registro.anotar(tipo, cola_ms=cola_ms, pintar_ms=pintar_ms, **datos)
 
 # MQTT callbacks
 class TanteadorMQTT:
@@ -379,6 +434,7 @@ class TanteadorMQTT:
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
+        self.client.on_disconnect = self.on_disconnect
         # connect_async + loop_start: si mosquitto todavía no levantó (arranque
         # de la Pi) reintenta solo en vez de abortar.
         self.client.connect_async('localhost', 1883, 60)
@@ -394,9 +450,12 @@ class TanteadorMQTT:
         ]
         for t in topics:
             client.subscribe(t)
+        self.widget.registro.anotar('mqtt', estado='conectado')
+    def on_disconnect(self, client, userdata, rc):
+        self.widget.registro.anotar('mqtt', estado='desconectado', rc=rc)
     def on_message(self, client, userdata, msg):
         # Sin trabajo pesado acá: el hilo de red vuelve enseguida a leer socket.
-        self.widget.mqtt_event.emit(msg.topic)
+        self.widget.mqtt_event.emit(msg.topic, time.monotonic())
 
 def main():
     app = QApplication(sys.argv)

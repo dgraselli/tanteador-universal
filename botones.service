@@ -1,0 +1,14 @@
+[Unit]
+Description=Control cableado del tablero (botones por GPIO, publica en MQTT)
+After=multi-user.target
+
+[Service]
+Type=simple
+User=chaca
+WorkingDirectory=/home/chaca/tnt
+ExecStart=/usr/bin/python3 /home/chaca/tnt/botones.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

@@ -29,6 +29,7 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 ├── splash.conf                  # Texto y colores del cartel
 ├── splash.service               # Servicio systemd del cartel
 ├── setup-splash.sh              # Silencia el log de arranque (una sola vez)
+├── setup-pantalla.sh            # Fija la resolución del monitor (una sola vez)
 ├── deploy.sh                    # Despliega a la Raspberry y reinicia el servicio
 ├── backup-firmware.sh           # Vuelca la flash del ESP antes de reflashear
 ├── medir-senal.sh               # Mide el RSSI del control a lo largo de la cancha
@@ -138,6 +139,47 @@ Con módulo relé: VCC al pin 2 (5 V), GND al pin 6, IN al pin 12 (GPIO18);
 el 12 V+ de la fuente a COM, NO al + de la chicharra, y el − de la
 chicharra al − de la fuente. Si la chicharra es electromagnética (bobina),
 poné un diodo 1N4007 en paralelo con ella, en inversa (banda al +).
+
+El control cableado puede llevar su propio buzzer de 12 V en la caja de los
+botones, que suena con el mismo ritmo que la chicharra cuando el punto ya
+está en pantalla: GPIO23 (pin físico 16) → módulo MOSFET optoacoplado → un
+hilo blanco del UTP. Se prende con `BUZZER_CONTROL = True` en
+`tanteador.py`. Compras y cableado en el anexo de `control-cableado.pdf`
+(páginas 4 y 5).
+
+## Confirmación en el control remoto
+
+El tablero contesta cada toque del control wifi (tópico `ack`) recién cuando
+el número ya está en pantalla. El control lo muestra así:
+
+| Qué pasó | LED | Buzzer |
+|---|---|---|
+| Punto anotado | guiño (se apaga un instante) | un beep agudo |
+| Resta / reset / tema | guiño | dos beeps cortos / uno largo grave / dos subiendo |
+| Doble toque frenado por el tablero | nada | nada (el primero ya sonó) |
+| No contó (sin señal, o llegó con más de 3 s de atraso) | parpadeo rápido | tres largos y graves, ~4 s después del toque |
+
+Con el aviso de "no contó", hay que volver a apretar. El tablero nunca
+suma dos veces el mismo toque, aunque el control lo reenvíe.
+
+Buzzer en D2 (GPIO4), **activo** o **pasivo**: se elige con `BUZZER_ACTIVO`
+en el firmware. El activo suena siempre en el mismo tono y los sonidos se
+distinguen por el ritmo; el pasivo (KY-006) además cambia de tono. Un
+módulo activo de 3 pines (VCC, GND, I/O) ya trae transistor: VCC a 5V, GND
+a G, I/O a D2, sin nada más; si suena todo el tiempo y calla en los beeps,
+es de los que se activan con LOW: `BUZZER_SUENA = LOW`. Un buzzer suelto
+(2 patas) va como sigue. El ESP da 3,3 V y
+pocos mA por pin: para que se oiga en la cancha, manejalo con un transistor
+NPN (S8050, 2N2222) desde los 5 V del USB:
+
+```
+D2 ── 1 kΩ ── base       emisor ── GND
+5V ── buzzer + ;  buzzer − ── colector
+```
+
+Si el buzzer es electromagnético (la mayoría de los KY-006), un diodo
+1N4148 en paralelo con él, en inversa (banda al 5V). Para probar en la mesa
+se puede conectar el S del módulo directo a D2, pero suena bajo.
 
 ## Página de pruebas desde el celular
 

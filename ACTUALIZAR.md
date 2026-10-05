@@ -152,6 +152,30 @@ ver el log de arranque, por ejemplo para diagnosticar algo:
 Deja el `cmdline.txt` como estaba (guardó una copia en `cmdline.txt.antes-del-splash`,
 en la partición FAT, que se lee desde cualquier PC si alguna vez la Pi no arranca).
 
+### Resolución fija del monitor
+
+Con el cable o adaptador HDMI flojo, la Pi no siempre lee bien qué
+resoluciones acepta el monitor (el EDID), y cada arranque salía en una
+distinta. `setup-pantalla.sh` la fija, por defecto en 1280x720 a 60 Hz, que
+además le pide al cable la mitad que 1920x1080:
+
+```bash
+./setup-pantalla.sh               # 1280x720
+./setup-pantalla.sh 1600x900      # la nativa del Samsung, si 720p no convence
+ssh chaca@192.168.216.1 'sudo reboot'
+```
+
+Agrega `video=HDMI-A-1:1280x720@60D` a `cmdline.txt` (copia en
+`cmdline.txt.antes-de-pantalla`) e instala el `.xinitrc` del repo, que le
+impone ese modo a X. Para comprobar que tomó, la bitácora anota un evento
+`pantalla` en cada arranque, con el ancho y el alto. Si el monitor queda en
+negro, se vuelve atrás con `./setup-pantalla.sh --revertir` y un reinicio;
+si la Pi no llega a arrancar, se edita `cmdline.txt` desde cualquier PC y se
+borra el `video=...` del final.
+
+`./setup-splash.sh --revertir` restaura una copia de `cmdline.txt` anterior a
+este cambio: después de usarlo, volvé a correr `setup-pantalla.sh`.
+
 ---
 
 ## Actualizar el control remoto (ESP8266)

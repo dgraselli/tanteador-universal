@@ -70,7 +70,7 @@ class Historial:
             e = self.encendidos[b] = {
                 'b': b, 'm0': ev['m'], 'ts0': ev['ts'], 'm1': ev['m'],
                 'relojes': [], 'arranques': 0, 'puntos': 0, 'lentos': 0,
-                'lat_max': 0, 'ignorados': 0, 'trabados': 0, 'trabado_max': 0,
+                'lat_max': 0, 'ignorados': 0, 'tardes': 0, 'trabados': 0, 'trabado_max': 0,
                 'cortes_control': 0, 'cortes_mqtt': 0, 'mem_min': None,
                 'temp_max': None, 'tension': 0, 'rssi_min': None}
         e['m1'] = max(e['m1'], ev['m'])
@@ -111,6 +111,8 @@ class Historial:
             self._cerrar(ev['b'], 'reset')
         elif tipo == 'ignorado':
             e['ignorados'] += 1
+        elif tipo == 'tarde':
+            e['tardes'] += 1
         elif tipo == 'trabado':
             e['trabados'] += 1
             e['trabado_max'] = max(e['trabado_max'], ev['seg'])
@@ -154,7 +156,7 @@ class Historial:
                     'ini': round(base), 'dur': round(e['m1']), 'hora_ok': ok,
                     'actual': b == ENCENDIDO,
                     **{k: e[k] for k in ('arranques', 'puntos', 'lentos',
-                                         'lat_max', 'ignorados', 'trabados',
+                                         'lat_max', 'ignorados', 'tardes', 'trabados',
                                          'trabado_max', 'cortes_control',
                                          'cortes_mqtt', 'mem_min', 'temp_max',
                                          'tension', 'rssi_min')}})
@@ -218,13 +220,15 @@ PAGINA = """<!doctype html>
 <h2>Encendidos (diagnóstico)</h2>
 <div class="tabla"><table id="encendidos"><thead><tr>
 <th>Encendido</th><th>Duró</th><th>Toques</th><th>Lentos</th><th>Más lento</th>
-<th>Trabones</th><th>Cortes control</th><th>Señal peor</th><th>Mem. mín.</th>
+<th>Tarde</th><th>Trabones</th><th>Cortes control</th><th>Señal peor</th><th>Mem. mín.</th>
 <th>Temp. máx.</th><th>Tensión baja</th><th>Reinicios</th>
 </tr></thead><tbody></tbody></table></div>
 
 <p><small>
 <b>Toque lento</b>: más de <span class="lento"></span>&nbsp;ms entre que llega
-el toque y se ve en pantalla. <b>Trabón</b>: la pantalla estuvo congelada más
+el toque y se ve en pantalla. <b>Tarde</b>: toques del control wifi que
+llegaron con más de 3&nbsp;s de atraso y no se contaron (el control lo avisa
+con el LED parpadeando rápido). <b>Trabón</b>: la pantalla estuvo congelada más
 de 1,5&nbsp;s. <b>Corte del control</b>: el control dejó de reportar su señal
 más de 15&nbsp;s. Los partidos con menos de <span class="minp"></span> puntos
 no se cuentan. Las horas con <b>≈</b> son aproximadas: la Pi no tiene reloj y
@@ -288,6 +292,7 @@ async function cargar() {
     fila('encendidos', [
       celda(fecha(e.ini, e.hora_ok) + (e.actual ? ' (ahora)' : '')), celda(dur(e.dur)), celda(e.puntos),
       celda(e.lentos, e.lentos ? 'mal' : ''), celda(e.lat_max + ' ms', e.lat_max > d.lento_ms ? 'mal' : ''),
+      celda(e.tardes, e.tardes ? 'ojo' : ''),
       celda(e.trabados ? e.trabados + ' (' + e.trabado_max + ' s)' : 0, e.trabados ? 'mal' : ''),
       celda(e.cortes_control, e.cortes_control ? 'ojo' : ''),
       celda(e.rssi_min === null ? '\\u2014' : e.rssi_min, e.rssi_min !== null && e.rssi_min < -75 ? 'mal' : ''),

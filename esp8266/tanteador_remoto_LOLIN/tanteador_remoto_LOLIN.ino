@@ -126,9 +126,10 @@ void setup() {
     digitalWrite(BUZZER, BUZZER_ACTIVO ? !BUZZER_SUENA : LOW);
   }
 
-  snprintf(nonce, sizeof(nonce), "%04x", (unsigned) (ESP.random() & 0xffff));
-
   setup_wifi();
+  // Después del WiFi: el generador del ESP8266 saca el azar del ruido de la
+  // radio, y antes de encenderla el valor es menos aleatorio.
+  snprintf(nonce, sizeof(nonce), "%04x", (unsigned) (ESP.random() & 0xffff));
   setup_ota();
   client.setServer(mqtt_server, 1883);
   client.setCallback(recibir);

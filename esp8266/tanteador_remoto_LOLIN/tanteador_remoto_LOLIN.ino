@@ -13,7 +13,7 @@ IPAddress local_ip(192, 168, 216, 5);
 IPAddress gateway(192, 168, 216, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-// Pines de los botones (Wemos D1 Mini - LOLIN)
+// Pines de los botones (NodeMCU v3 LOLIN, CH340)
 const int TEAM1_UP = D1;    // GPIO5
 const int TEAM2_UP = D5;    // GPIO14
 const int RESET_BTN = D7;   // GPIO13
@@ -23,9 +23,17 @@ const int LED_STATUS = D3; // Luz de estado MQTT (GPIO0)
 
 // Buzzer: suena cuando el tablero confirma que el toque se anotó, con un
 // sonido distinto si no contó. Sin buzzer conectado el pin cambia al aire y
-// no pasa nada. D2 porque está libre y no interviene en el arranque (D3, D4
-// y D8 sí). -1 = sin buzzer.
-const int BUZZER = D2;     // GPIO4
+// no pasa nada. -1 = sin buzzer.
+//
+// S3 (GPIO10), del lado izquierdo de la NodeMCU v3 LOLIN, como VIN y GND que
+// lo alimentan. Ese lado es casi todo de la memoria flash: GPIO10 queda libre
+// solo si el firmware se graba en modo DIO (o DOUT); en QIO la flash lo usa y
+// tocarlo cuelga el ESP. PlatformIO graba en DIO por defecto; en el Arduino
+// IDE, Herramientas -> Flash Mode: DIO. Por las dudas, setup() mira el modo
+// real y, si no es DIO/DOUT, deja el buzzer apagado en vez de colgarse.
+// Alternativa sin esa vuelta: D6 (GPIO12), del lado derecho.
+const int BUZZER_PIN = 10;  // S3 = GPIO10
+int BUZZER = -1;            // el pin en uso, o -1 si no hay buzzer
 // Activo (trae oscilador: suena con solo darle tensión, siempre en el mismo
 // tono) o pasivo (KY-006: el ESP le genera la frecuencia con tone()). El
 // activo no distingue tonos: los sonidos se diferencian por el ritmo.
@@ -121,6 +129,16 @@ void setup() {
   // Configurar LED de estado
   pinMode(LED_STATUS, OUTPUT);
   digitalWrite(LED_STATUS, LOW); // Apagado al inicio
+  FlashMode_t modo = ESP.getFlashChipMode();
+  if (BUZZER_PIN == 9 || BUZZER_PIN == 10) {
+    if (modo == FM_DIO || modo == FM_DOUT) {
+      BUZZER = BUZZER_PIN;
+    } else {
+      Serial.println("Flash en QIO: GPIO9/10 son de la flash, buzzer apagado");
+    }
+  } else {
+    BUZZER = BUZZER_PIN;
+  }
   if (BUZZER >= 0) {
     pinMode(BUZZER, OUTPUT);
     digitalWrite(BUZZER, BUZZER_ACTIVO ? !BUZZER_SUENA : LOW);

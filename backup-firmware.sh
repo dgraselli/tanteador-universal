@@ -19,7 +19,7 @@ command -v esptool.py >/dev/null || { echo "❌ Falta esptool.py (pip3 install e
 if [ -z "$PORT" ]; then
     mapfile -t PORTS < <(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null)
     case ${#PORTS[@]} in
-        0) echo "❌ No hay ninguna placa conectada. Enchufa el D1 Mini por USB."; exit 1 ;;
+        0) echo "❌ No hay ninguna placa conectada. Enchufa la NodeMCU por USB."; exit 1 ;;
         1) PORT="${PORTS[0]}" ;;
         *) echo "❌ Hay varias placas: ${PORTS[*]}"
            echo "   Elegi una: $0 ${PORTS[0]}"; exit 1 ;;

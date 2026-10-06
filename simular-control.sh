@@ -1,6 +1,6 @@
 #!/bin/bash
 # Simula el control remoto (ESP8266) publicando por MQTT desde el teclado.
-# Sirve para probar el tanteador en la notebook, sin la Raspberry ni el Wemos.
+# Sirve para probar el tanteador en la notebook, sin la Raspberry ni el ESP del control.
 #
 #   Terminal 1:  python3 tanteador.py
 #   Terminal 2:  ./simular-control.sh

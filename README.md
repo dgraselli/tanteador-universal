@@ -1,6 +1,6 @@
 # Tanteador Universal
 
-Proyecto de tanteador electrónico con interfaz gráfica PyQt5 y control remoto inalámbrico basado en ESP8266 (Wemos D1 Mini).
+Proyecto de tanteador electrónico con interfaz gráfica PyQt5 y control remoto inalámbrico basado en ESP8266 (NodeMCU v3 LOLIN, CH340).
 
 El tanteador fue donado para la cancha de Pelota Paleta del querido Club Uiniversal de La Plata.
 
@@ -60,7 +60,7 @@ Para el tablero:
 - Bastidor de melaina y policarbonato compacto 10mm.
 
 Para el control remoto:
-- Placa ESP8266 (Wemos D1 Mini) (alternativa Node32)
+- Placa ESP8266 NodeMCU v3 LOLIN (CH340) (alternativa Node32)
 - 3 Botones pulsadores
 - 1 boton push con retencion
 - Caja estanco
@@ -162,24 +162,28 @@ el número ya está en pantalla. El control lo muestra así:
 Con el aviso de "no contó", hay que volver a apretar. El tablero nunca
 suma dos veces el mismo toque, aunque el control lo reenvíe.
 
-Buzzer en D2 (GPIO4), **activo** o **pasivo**: se elige con `BUZZER_ACTIVO`
-en el firmware. El activo suena siempre en el mismo tono y los sonidos se
+Buzzer en S3 (GPIO10), del lado izquierdo de la NodeMCU, **activo** o
+**pasivo**: se elige con `BUZZER_ACTIVO` en el firmware. GPIO10 solo está
+libre con el firmware grabado en modo de flash **DIO** (PlatformIO lo hace
+así; en el Arduino IDE, Herramientas → Flash Mode: DIO). Si quedara en QIO,
+el firmware lo detecta y deja el buzzer apagado en vez de colgarse. El activo suena siempre en el mismo tono y los sonidos se
 distinguen por el ritmo; el pasivo (KY-006) además cambia de tono. Un
-módulo activo de 3 pines (VCC, GND, I/O) ya trae transistor: VCC a 5V, GND
-a G, I/O a D2, sin nada más; si suena todo el tiempo y calla en los beeps,
+módulo activo de 3 pines (VCC, GND, I/O) ya trae transistor: VCC a VIN,
+GND a G (los dos abajo a la izquierda), I/O a S3, sin nada más; si suena todo el tiempo y calla en los beeps,
 es de los que se activan con LOW: `BUZZER_SUENA = LOW`. Un buzzer suelto
 (2 patas) va como sigue. El ESP da 3,3 V y
 pocos mA por pin: para que se oiga en la cancha, manejalo con un transistor
-NPN (S8050, 2N2222) desde los 5 V del USB:
+NPN (S8050, 2N2222) desde VIN (los 5 V del USB):
 
 ```
-D2 ── 1 kΩ ── base       emisor ── GND
-5V ── buzzer + ;  buzzer − ── colector
+S3  ── 1 kΩ ── base       emisor ── G
+VIN ── buzzer + ;  buzzer − ── colector
 ```
 
 Si el buzzer es electromagnético (la mayoría de los KY-006), un diodo
-1N4148 en paralelo con él, en inversa (banda al 5V). Para probar en la mesa
-se puede conectar el S del módulo directo a D2, pero suena bajo.
+1N4148 en paralelo con él, en inversa (banda a VIN). Para probar en la mesa
+se puede conectar el S del módulo directo a S3, con una resistencia de
+100 Ω en serie, pero suena bajo.
 
 ## Página de pruebas desde el celular
 

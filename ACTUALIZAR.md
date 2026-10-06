@@ -10,7 +10,7 @@ a la Raspberry y al control remoto.
 | Raspberry Pi | `tanteador.py` | `./deploy.sh` desde la notebook |
 | Raspberry Pi | `silencio.py` (daemon de audio) y `pruebas.py` (páginas de diagnóstico) | `./deploy.sh` desde la notebook |
 | Raspberry Pi | AP WiFi (`hostapd`, `dnsmasq`) | editando `/etc/hostapd/hostapd.conf` a mano |
-| Wemos D1 Mini | firmware `.ino` | por WiFi (OTA), o por USB la primera vez |
+| NodeMCU v3 LOLIN (CH340) | firmware `.ino` | por WiFi (OTA), o por USB la primera vez |
 
 Datos de la red, para tenerlos a mano:
 
@@ -193,7 +193,8 @@ Guardá ese `.bin` fuera de la Pi. Tiene la contraseña del WiFi adentro, en tex
 plano, así que no lo subas al repo (el `.gitignore` ya ignora `*.bin`).
 
 Después, abrí `esp8266/tanteador_remoto_LOLIN/tanteador_remoto_LOLIN.ino` en el
-Arduino IDE, elegí la placa **LOLIN(WEMOS) D1 R2 & mini**, el puerto USB, y dale
+Arduino IDE, elegí la placa **NodeMCU 1.0 (ESP-12E Module)** con **Flash Mode:
+DIO** (el buzzer usa GPIO10, que en QIO es de la flash), el puerto USB, y dale
 a subir.
 
 ### De ahí en adelante: por WiFi (OTA)

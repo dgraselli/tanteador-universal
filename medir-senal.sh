@@ -75,7 +75,7 @@ def resumen():
     if peor >= -70:
         print("La señal NO es el problema: hay margen en toda la cancha.")
     elif peor >= -80:
-        print("Justo. Conviene mover la Pi, o pasar a un Wemos D1 Mini Pro")
+        print("Justo. Conviene mover la Pi, o pasar a una placa con antena externa (Wemos D1 Mini Pro)")
         print("(tiene conector para antena externa).")
     else:
         print("Acá sí hay un problema de señal, y explica los cortes.")

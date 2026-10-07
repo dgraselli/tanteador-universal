@@ -163,28 +163,30 @@ el número ya está en pantalla. El control lo muestra así:
 Con el aviso de "no contó", hay que volver a apretar. El tablero nunca
 suma dos veces el mismo toque, aunque el control lo reenvíe.
 
-Buzzer en S3 (GPIO10), del lado izquierdo de la NodeMCU, **activo** o
-**pasivo**: se elige con `BUZZER_ACTIVO` en el firmware. GPIO10 solo está
-libre con el firmware grabado en modo de flash **DIO** (PlatformIO lo hace
-así; en el Arduino IDE, Herramientas → Flash Mode: DIO). Si quedara en QIO,
-el firmware lo detecta y deja el buzzer apagado en vez de colgarse. El activo suena siempre en el mismo tono y los sonidos se
-distinguen por el ritmo; el pasivo (KY-006) además cambia de tono. Un
-módulo activo de 3 pines (VCC, GND, I/O) ya trae transistor: VCC a VIN,
-GND a G (los dos abajo a la izquierda), I/O a S3, sin nada más; si suena todo el tiempo y calla en los beeps,
-es de los que se activan con LOW: `BUZZER_SUENA = LOW`. Un buzzer suelto
+Buzzer en D6 (GPIO12, lado derecho de la NodeMCU, entre D5 y D7),
+**activo** o **pasivo**: se elige con `BUZZER_ACTIVO` en el firmware. El
+activo suena siempre en el mismo tono y los sonidos se distinguen por el
+ritmo; el pasivo (KY-006) además cambia de tono. El módulo puede ir montado
+del lado izquierdo, alimentado por G y 3V (posiciones 10 y 11 desde arriba),
+con solo el cable de señal cruzando a D6. Un módulo de 3 patas (−, +, S) que
+trae transistor va así: − a G, la del medio a 3V (o a VIN, más fuerte), S a
+D6, sin nada más; si suena todo el tiempo y calla en los beeps, es de los que se activan con LOW: `BUZZER_SUENA = LOW`. Un buzzer suelto
 (2 patas) va como sigue. El ESP da 3,3 V y
 pocos mA por pin: para que se oiga en la cancha, manejalo con un transistor
 NPN (S8050, 2N2222) desde VIN (los 5 V del USB):
 
 ```
-S3  ── 1 kΩ ── base       emisor ── G
+D6  ── 1 kΩ ── base       emisor ── G
 VIN ── buzzer + ;  buzzer − ── colector
 ```
 
 Si el buzzer es electromagnético (la mayoría de los KY-006), un diodo
 1N4148 en paralelo con él, en inversa (banda a VIN). Para probar en la mesa
-se puede conectar el S del módulo directo a S3, con una resistencia de
+se puede conectar el S del módulo directo a D6, con una resistencia de
 100 Ω en serie, pero suena bajo.
+
+No usar S3 (GPIO10) aunque esté del lado izquierdo: es una pata de la
+memoria flash, y en este control el ESP se cuelga apenas se le conecta algo.
 
 ## Página de pruebas desde el celular
 

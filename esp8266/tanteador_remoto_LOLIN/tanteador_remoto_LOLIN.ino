@@ -25,19 +25,21 @@ const int LED_STATUS = D3; // Luz de estado MQTT (GPIO0)
 // sonido distinto si no contó. Sin buzzer conectado el pin cambia al aire y
 // no pasa nada. -1 = sin buzzer.
 //
-// S3 (GPIO10), del lado izquierdo de la NodeMCU v3 LOLIN, como VIN y GND que
-// lo alimentan. Ese lado es casi todo de la memoria flash: GPIO10 queda libre
-// solo si el firmware se graba en modo DIO (o DOUT); en QIO la flash lo usa y
-// tocarlo cuelga el ESP. PlatformIO graba en DIO por defecto; en el Arduino
-// IDE, Herramientas -> Flash Mode: DIO. Por las dudas, setup() mira el modo
-// real y, si no es DIO/DOUT, deja el buzzer apagado en vez de colgarse.
-// Alternativa sin esa vuelta: D6 (GPIO12), del lado derecho.
-const int BUZZER_PIN = 10;  // S3 = GPIO10
+// D6 (GPIO12): libre y sin papel en el arranque (D3, D4 y D8 sí lo tienen).
+// El buzzer puede ir montado del lado izquierdo, alimentado por G y 3V, con
+// solo el cable de señal cruzando a D6.
+//
+// NO usar S3 (GPIO10), el único pin del lado izquierdo con número de GPIO: es
+// la pata WP de la memoria flash. Se probó en este control (oct 2026) y,
+// aunque en modo DIO se puede mover sin nada conectado, apenas se le conecta
+// el buzzer el ESP se cuelga. Si alguna vez se usa GPIO9 o GPIO10 en otra
+// placa, setup() al menos exige flash en DIO/DOUT antes de tocarlos.
+const int BUZZER_PIN = D6;  // GPIO12
 int BUZZER = -1;            // el pin en uso, o -1 si no hay buzzer
 // Activo (trae oscilador: suena con solo darle tensión, siempre en el mismo
 // tono) o pasivo (KY-006: el ESP le genera la frecuencia con tone()). El
 // activo no distingue tonos: los sonidos se diferencian por el ritmo.
-const bool BUZZER_ACTIVO = true;
+const bool BUZZER_ACTIVO = false;  // el del control es pasivo (KY-006): con true solo hace "tic"
 // Nivel que lo hace sonar. HIGH con transistor NPN o buzzer suelto; algunos
 // módulos de 3 pines suenan con LOW (traen un PNP): si suena siempre y calla
 // en los beeps, cambiar a LOW.
@@ -98,13 +100,18 @@ unsigned long ledFallaHasta = 0;
 // Sonidos: notas (frecuencia, duración, silencio después) que el loop toca
 // de a una, sin frenar la lectura de los botones. Con buzzer activo la
 // frecuencia se ignora: cuentan la duración y los silencios.
+//
+// El buzzer pasivo del control (KY-006) suena más fuerte en 1800 Hz: es su
+// resonancia, medida a oído probando de 1400 a 4000 Hz (oct 2026). Lejos de
+// ahí se oye mucho menos, así que todos los sonidos quedan cerca y se
+// distinguen sobre todo por el ritmo. Con otro buzzer, repetir la prueba.
 struct Nota { unsigned int hz; unsigned int ms; unsigned int pausa; };
-const Nota SON_PUNTO[] = {{2400, 120, 0}};
-const Nota SON_RESTA[] = {{1600, 70, 60}, {1600, 70, 0}};   // como en el tablero
-const Nota SON_RESET[] = {{1200, 400, 0}};
-const Nota SON_TEMA[]  = {{2000, 60, 30}, {2800, 60, 0}};
-// No contó: tres largos y graves, que no se confunden con nada de lo anterior.
-const Nota SON_FALLA[] = {{500, 200, 80}, {420, 200, 80}, {350, 450, 0}};
+const Nota SON_PUNTO[] = {{1800, 150, 0}};
+const Nota SON_RESTA[] = {{1800, 70, 60}, {1800, 70, 0}};   // como en el tablero
+const Nota SON_RESET[] = {{1600, 450, 0}};
+const Nota SON_TEMA[]  = {{1600, 60, 30}, {2000, 60, 0}};
+// No contó: tres largos que bajan, que no se confunden con nada de lo anterior.
+const Nota SON_FALLA[] = {{1400, 200, 80}, {1200, 200, 80}, {1000, 450, 0}};
 const Nota* sonido = nullptr;
 int notasRestantes = 0;
 unsigned long proximaNota = 0;

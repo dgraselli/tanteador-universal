@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 1150" width="1040" height="1150" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="flecha" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#888"/>
+    </marker>
+    <marker id="gota" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2f7fd0"/>
+    </marker>
+  </defs>
+
+  <rect width="1040" height="1150" fill="#ffffff"/>
+
+  <text x="520" y="40" text-anchor="middle" font-size="26" font-weight="bold" fill="#111">
+    Instalación del control cableado — vista de costado (alzado)
+  </text>
+  <text x="520" y="66" text-anchor="middle" font-size="15" fill="#666">
+    Sin radio no importan el monitor ni la reja: lo que cuida el cable es el recorrido, el agua y los cables de 220 V.
+  </text>
+
+  <!-- ============ PANEL 1: BIEN ============ -->
+  <g>
+    <rect x="30" y="90" width="980" height="360" rx="10" fill="#f2faf4" stroke="#22aa55" stroke-width="2"/>
+    <text x="52" y="122" font-size="19" font-weight="bold" fill="#1a7a40">✔ BIEN — el cable va alto, fijado y fuera de la zona de juego</text>
+
+    <!-- piso -->
+    <line x1="52" y1="420" x2="988" y2="420" stroke="#bbb" stroke-width="2"/>
+    <text x="60" y="438" font-size="12" fill="#999">piso</text>
+
+    <!-- tablero en la pared -->
+    <rect x="60" y="190" width="190" height="150" rx="6" fill="#fff" stroke="#333" stroke-width="2"/>
+    <text x="110" y="182" text-anchor="middle" font-size="13" fill="#333">tablero (pared)</text>
+    <rect x="232" y="200" width="14" height="130" fill="#555"/>
+    <text x="239" y="352" text-anchor="middle" font-size="10" fill="#777">monitor</text>
+    <rect x="72" y="204" width="50" height="30" rx="3" fill="#e8f0fa" stroke="#4a6fa5"/>
+    <text x="97" y="223" text-anchor="middle" font-size="11" fill="#2c4f80">Pi</text>
+    <rect x="128" y="204" width="96" height="30" rx="3" fill="#fff6e6" stroke="#c9922e"/>
+    <text x="176" y="223" text-anchor="middle" font-size="11" fill="#8a5d10">módulo optos</text>
+    <rect x="72" y="242" width="72" height="30" rx="3" fill="#fff6e6" stroke="#c9922e"/>
+    <text x="108" y="261" text-anchor="middle" font-size="11" fill="#8a5d10">MOSFET</text>
+    <rect x="150" y="242" width="74" height="30" rx="3" fill="#f3f3f3" stroke="#888"/>
+    <text x="187" y="261" text-anchor="middle" font-size="11" fill="#555">borneras</text>
+    <rect x="72" y="282" width="152" height="42" rx="3" fill="#f3f3f3" stroke="#888"/>
+    <text x="148" y="300" text-anchor="middle" font-size="11" fill="#555">fuente 12 V</text>
+    <text x="148" y="315" text-anchor="middle" font-size="10" fill="#888">(la de la chicharra)</text>
+
+    <!-- cable: sale arriba del tablero, corre alto, baja por el poste y entra por abajo con panza -->
+    <path d="M187 190 V160 H790 V368 Q790 398 812 398 Q834 398 834 368 V346"
+          fill="none" stroke="#222" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- grampas -->
+    <g stroke="#22aa55" stroke-width="3">
+      <line x1="280" y1="152" x2="280" y2="168"/><line x1="380" y1="152" x2="380" y2="168"/>
+      <line x1="480" y1="152" x2="480" y2="168"/><line x1="580" y1="152" x2="580" y2="168"/>
+      <line x1="680" y1="152" x2="680" y2="168"/><line x1="782" y1="230" x2="798" y2="230"/>
+      <line x1="782" y1="300" x2="798" y2="300"/>
+    </g>
+    <text x="480" y="148" text-anchor="middle" font-size="12" fill="#14512f">UTP de exterior, ~30 m, fijado con precintos o grampas cada ~50 cm, por encima de las cabezas</text>
+
+    <!-- zona de juego -->
+    <g fill="#c8c8c8">
+      <circle cx="450" cy="317" r="11"/><rect x="438" y="330" width="24" height="76" rx="8"/>
+      <circle cx="500" cy="322" r="10"/><rect x="489" y="334" width="22" height="72" rx="8"/>
+    </g>
+    <circle cx="590" cy="300" r="9" fill="#f0c040" stroke="#b08a20"/>
+    <text x="520" y="250" text-anchor="middle" font-size="13" fill="#555">zona de juego</text>
+    <text x="520" y="266" text-anchor="middle" font-size="11" fill="#888">nada de cable suelto en el piso ni a la altura de la pelota</text>
+
+    <!-- paso: alternativa por el piso -->
+    <rect x="300" y="408" width="120" height="12" rx="6" fill="#999"/>
+    <text x="360" y="389" text-anchor="middle" font-size="11" fill="#555">si tiene que cruzar un paso por el piso:</text>
+    <text x="360" y="402" text-anchor="middle" font-size="11" fill="#555">dentro de un cubrecable o caño</text>
+
+    <!-- reja y caja -->
+    <line x1="770" y1="170" x2="770" y2="420" stroke="#888" stroke-width="4" stroke-dasharray="3 3"/>
+    <text x="762" y="190" text-anchor="end" font-size="11" fill="#666">reja</text>
+    <rect x="806" y="246" width="88" height="100" rx="8" fill="#fff" stroke="#333" stroke-width="2"/>
+    <circle cx="830" cy="272" r="9" fill="#e05a1a"/>
+    <circle cx="830" cy="297" r="9" fill="#22aa55"/>
+    <circle cx="830" cy="322" r="9" fill="#555"/>
+    <text x="846" y="276" font-size="10" fill="#333">LOCAL</text>
+    <text x="846" y="301" font-size="10" fill="#333">VISITA</text>
+    <text x="846" y="326" font-size="10" fill="#333">RESET</text>
+    <circle cx="878" cy="258" r="5" fill="#333"/>
+    <text x="850" y="238" text-anchor="middle" font-size="12" fill="#333">caja IP65</text>
+    <text x="906" y="262" font-size="11" fill="#555">buzzer</text>
+    <rect x="826" y="342" width="16" height="8" fill="#22aa55"/>
+    <text x="906" y="350" font-size="11" fill="#14512f" font-weight="bold">prensaestopas</text>
+    <text x="906" y="364" font-size="11" fill="#14512f">PG9, abajo</text>
+    <text x="906" y="382" font-size="11" fill="#14512f" font-weight="bold">panza</text>
+    <text x="906" y="396" font-size="11" fill="#14512f">más baja que</text>
+    <text x="906" y="409" font-size="11" fill="#14512f">la entrada</text>
+    <text x="682" y="440" text-anchor="middle" font-size="11" fill="#555">la reja protege la caja de la pelota; para el cable da igual</text>
+  </g>
+
+  <!-- ============ PANEL 2: MAL agua ============ -->
+  <g>
+    <rect x="30" y="470" width="480" height="250" rx="10" fill="#fdf3f3" stroke="#cc3333" stroke-width="2"/>
+    <text x="52" y="502" font-size="19" font-weight="bold" fill="#a02020">✘ MAL — el cable entra por arriba</text>
+    <rect x="150" y="560" width="110" height="100" rx="8" fill="#fff" stroke="#b33" stroke-width="2"/>
+    <path d="M205 520 V560" fill="none" stroke="#222" stroke-width="5"/>
+    <line x1="215" y1="525" x2="215" y2="585" stroke="#2f7fd0" stroke-width="2" marker-end="url(#gota)"/>
+    <text x="232" y="540" font-size="11" fill="#2f7fd0">la lluvia baja</text>
+    <text x="232" y="553" font-size="11" fill="#2f7fd0">por la vaina</text>
+    <text x="205" y="615" text-anchor="middle" font-size="12" fill="#a02020">agua adentro</text>
+    <!-- bien, chiquito -->
+    <rect x="350" y="560" width="90" height="80" rx="8" fill="#fff" stroke="#22aa55" stroke-width="2"/>
+    <path d="M330 520 V655 Q330 680 352 680 Q374 680 374 655 V640" fill="none" stroke="#222" stroke-width="4"/>
+    <circle cx="352" cy="688" r="3" fill="#2f7fd0"/>
+    <text x="395" y="605" text-anchor="middle" font-size="12" fill="#14512f">✔</text>
+    <text x="270" y="710" text-anchor="middle" font-size="12" fill="#a02020" font-weight="bold">Entrá siempre por abajo, con una panza: el agua gotea antes.</text>
+  </g>
+
+  <!-- ============ PANEL 3: MAL 220 V ============ -->
+  <g>
+    <rect x="530" y="470" width="480" height="250" rx="10" fill="#fdf3f3" stroke="#cc3333" stroke-width="2"/>
+    <text x="552" y="502" font-size="19" font-weight="bold" fill="#a02020">✘ MAL — pegado a un cable de 220 V</text>
+    <line x1="570" y1="575" x2="970" y2="575" stroke="#222" stroke-width="5"/>
+    <text x="580" y="565" font-size="11" fill="#333">UTP</text>
+    <line x1="570" y1="588" x2="970" y2="588" stroke="#c0392b" stroke-width="5"/>
+    <text x="580" y="606" font-size="11" fill="#c0392b">220 V (luces, tomas)</text>
+    <path d="M700 580 q8 -12 16 0 t16 0 t16 0 t16 0" fill="none" stroke="#cc3333" stroke-width="1.5"/>
+    <text x="770" y="630" text-anchor="middle" font-size="12" fill="#a02020">tramo largo en paralelo: ruido y toques fantasma</text>
+    <!-- bien: cruce a 90 -->
+    <line x1="660" y1="660" x2="880" y2="660" stroke="#c0392b" stroke-width="4"/>
+    <line x1="770" y1="645" x2="770" y2="690" stroke="#222" stroke-width="4"/>
+    <text x="890" y="664" font-size="12" fill="#14512f">✔ cruce a 90°</text>
+    <text x="770" y="708" text-anchor="middle" font-size="12" fill="#a02020" font-weight="bold">Separalo 20 a 30 cm de los cables de 220 V.</text>
+  </g>
+
+  <!-- ============ NOTAS ============ -->
+  <g>
+    <rect x="30" y="740" width="980" height="385" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1.5"/>
+    <text x="52" y="770" font-size="16" font-weight="bold" fill="#333">Qué va en cada punta del UTP</text>
+
+    <g font-size="13" fill="#444">
+      <text x="52" y="798"><tspan fill="#e08a00" font-weight="bold">naranja</tspan>: +12 V común. En la caja, a un borne de cada botón y al + del buzzer. En el tablero, al + de la fuente.</text>
+      <text x="52" y="820"><tspan fill="#1f8a3a" font-weight="bold">verde</tspan> / <tspan fill="#2357b8" font-weight="bold">azul</tspan> / <tspan fill="#7a4a1e" font-weight="bold">marrón</tspan>: retorno de LOCAL / VISITA / RESET. En el tablero, a IN1 / IN2 / IN3 del módulo de optos.</text>
+      <text x="52" y="842"><tspan fill="#c9822e" font-weight="bold">blanco-naranja</tspan>: − del buzzer. En el tablero, a OUT− del módulo MOSFET. Nunca a un pin de la Pi: lleva 12 V.</text>
+      <text x="52" y="864"><tspan font-weight="bold">blanco-verde, blanco-azul, blanco-marrón</tspan>: libres, de reserva por si se corta un hilo.</text>
+    </g>
+
+    <text x="52" y="900" font-size="16" font-weight="bold" fill="#333">En el tablero, del lado de la Pi</text>
+    <g font-size="13" fill="#444">
+      <text x="52" y="926">Módulo de optos: VCC → pin 1 (3,3 V, <tspan font-weight="bold">nunca 5 V</tspan>), GND → pin 9, OUT1 / OUT2 / OUT3 → pines 11 / 13 / 15 (GPIO17 / 27 / 22).</text>
+      <text x="52" y="948">Módulo MOSFET: TRIG → pin 16 (GPIO23), GND de señal → pin 14. Fuente −: a GND de entrada de los optos y a VIN− del MOSFET.</text>
+      <text x="52" y="970">Los 12 V nunca tocan la Pi: del lado del cable solo hay optoacopladores. Ruido o descargas en los 30 m se quedan de ese lado.</text>
+    </g>
+
+    <text x="52" y="1006" font-size="16" font-weight="bold" fill="#333">Antes de cerrar las cajas</text>
+    <g font-size="13" fill="#444">
+      <text x="52" y="1032">1. Con el tester, sin la Pi: entre naranja y verde, abierto; al apretar LOCAL, continuidad. Lo mismo azul / VISITA y marrón / RESET.</text>
+      <text x="52" y="1054">2. Con la fuente y el módulo, todavía sin la Pi: cada botón prende el LED de su canal en el módulo de optos.</text>
+      <text x="52" y="1076">3. Con la Pi: toque corto en LOCAL suma al instante. Si suma al soltar o suma solo, la salida del módulo está invertida.</text>
+      <text x="52" y="1106" font-size="12" fill="#777">Detalle completo, compras y armado: control-cableado.pdf (buzzer del control en las páginas 4 y 5).</text>
+    </g>
+  </g>
+</svg>

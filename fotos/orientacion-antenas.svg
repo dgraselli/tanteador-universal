@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 860" width="1040" height="860" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 1190" width="1040" height="1190" font-family="Helvetica, Arial, sans-serif">
   <defs>
     <marker id="flecha" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
       <path d="M0,0 L0,6 L9,3 z" fill="#888"/>
@@ -13,7 +13,7 @@
     </radialGradient>
   </defs>
 
-  <rect width="1040" height="860" fill="#ffffff"/>
+  <rect width="1040" height="1190" fill="#ffffff"/>
 
   <text x="520" y="40" text-anchor="middle" font-size="26" font-weight="bold" fill="#111">
     Orientación de las placas — vista de costado (alzado)
@@ -41,24 +41,24 @@
       <text x="205" y="143" text-anchor="middle" font-size="13" fill="#555">tablero</text>
       <!-- policarbonato -->
       <rect x="120" y="150" width="9" height="130" fill="#bcdcf0" stroke="#7fb4d4"/>
-      <text x="112" y="300" text-anchor="middle" font-size="11" fill="#5a8fae" transform="rotate(-90 112 300)">policarbonato</text>
+      <text x="112" y="300" text-anchor="middle" font-size="11" fill="#5a8fae" transform="rotate(-90 112 300)">acrílico</text>
       <!-- monitor (chasis metálico) -->
       <rect x="238" y="162" width="44" height="106" fill="#ddd" stroke="#999"/>
       <text x="260" y="222" text-anchor="middle" font-size="10" fill="#777" transform="rotate(-90 260 222)">monitor</text>
       <!-- la Pi: placa parada, antena arriba -->
       <rect x="160" y="196" width="18" height="66" fill="#2a7d4f" stroke="#14512f" stroke-width="1.5"/>
       <polygon points="160,196 178,196 169,182" fill="#22aa55" stroke="#14512f" stroke-width="1.5"/>
-      <text x="150" y="230" text-anchor="middle" font-size="11" fill="#14512f" transform="rotate(-90 150 230)">Pi Zero W</text>
+      <text x="150" y="230" text-anchor="middle" font-size="11" fill="#14512f" transform="rotate(-90 150 230)">Pi Zero 2 W</text>
     </g>
 
-    <!-- CAJA con el Wemos -->
+    <!-- CAJA con la NodeMCU -->
     <g>
       <rect x="770" y="170" width="130" height="110" rx="8" fill="#fff" stroke="#333" stroke-width="2"/>
       <text x="835" y="163" text-anchor="middle" font-size="13" fill="#555">caja estanca (plástico)</text>
       <!-- wemos parado, antena arriba -->
       <rect x="826" y="200" width="18" height="60" fill="#2a7d4f" stroke="#14512f" stroke-width="1.5"/>
       <polygon points="826,200 844,200 835,186" fill="#22aa55" stroke="#14512f" stroke-width="1.5"/>
-      <text x="816" y="232" text-anchor="middle" font-size="11" fill="#14512f" transform="rotate(-90 816 232)">Wemos</text>
+      <text x="816" y="232" text-anchor="middle" font-size="11" fill="#14512f" transform="rotate(-90 816 232)">NodeMCU</text>
       <!-- botones -->
       <circle cx="790" cy="268" r="5" fill="#c33"/><circle cx="806" cy="268" r="5" fill="#3a3"/>
     </g>
@@ -94,10 +94,10 @@
     <polygon points="131,505 147,505 139,492" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
     <text x="139" y="578" text-anchor="middle" font-size="11" fill="#a02020">Pi (vertical)</text>
 
-    <!-- Wemos horizontal -->
+    <!-- NodeMCU horizontal -->
     <rect x="374" y="522" width="52" height="16" fill="#a04545" stroke="#6d2020" stroke-width="1.5"/>
     <polygon points="426,522 426,538 439,530" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
-    <text x="400" y="578" text-anchor="middle" font-size="11" fill="#a02020">Wemos (acostado)</text>
+    <text x="400" y="578" text-anchor="middle" font-size="11" fill="#a02020">NodeMCU (acostada)</text>
 
     <line x1="160" y1="530" x2="360" y2="530" stroke="#cc3333" stroke-width="2" stroke-dasharray="4 4"/>
 
@@ -126,7 +126,7 @@
 
     <rect x="874" y="522" width="52" height="16" fill="#a04545" stroke="#6d2020" stroke-width="1.5"/>
     <polygon points="874,522 874,538 861,530" fill="#cc5555" stroke="#6d2020" stroke-width="1.5"/>
-    <text x="900" y="578" text-anchor="middle" font-size="11" fill="#a02020">Wemos</text>
+    <text x="900" y="578" text-anchor="middle" font-size="11" fill="#a02020">NodeMCU</text>
 
     <line x1="690" y1="530" x2="850" y2="530" stroke="#cc3333" stroke-width="2" stroke-dasharray="4 4"/>
     <text x="770" y="522" text-anchor="middle" font-size="12" fill="#a02020">zona ciega</text>
@@ -139,27 +139,94 @@
     </text>
   </g>
 
+
+  <!-- ============ PANEL 4: ESTA INSTALACIÓN ============ -->
+  <g>
+    <rect x="30" y="650" width="980" height="315" rx="10" fill="#f6f8fb" stroke="#4a6fa5" stroke-width="2"/>
+    <text x="52" y="682" font-size="19" font-weight="bold" fill="#2c4f80">En esta cancha: el monitor tapa la Pi y la reja tapa el control</text>
+
+    <!-- piso -->
+    <line x1="52" y1="935" x2="988" y2="935" stroke="#bbb" stroke-width="2"/>
+    <text x="60" y="954" font-size="12" fill="#999">piso</text>
+
+    <!-- pared con la Pi empotrada -->
+    <rect x="60" y="705" width="44" height="230" fill="#e2e2e2" stroke="#aaa"/>
+    <text x="82" y="925" text-anchor="middle" font-size="11" fill="#777" transform="rotate(-90 82 925)">pared</text>
+    <rect x="104" y="790" width="16" height="52" rx="2" fill="#b33" />
+    <text x="96" y="866" text-anchor="end" font-size="11" fill="#a02020">✘ Pi detrás</text>
+    <text x="96" y="880" text-anchor="end" font-size="11" fill="#a02020">del monitor</text>
+    <!-- monitor -->
+    <rect x="124" y="760" width="22" height="120" fill="#555"/>
+    <text x="135" y="900" text-anchor="middle" font-size="11" fill="#555">monitor</text>
+    <text x="135" y="913" text-anchor="middle" font-size="10" fill="#888">(metal)</text>
+    <!-- tapa madera + acrílico -->
+    <line x1="156" y1="740" x2="156" y2="935" stroke="#c9a46a" stroke-width="5"/>
+    <text x="166" y="925" font-size="10" fill="#9a7a45" transform="rotate(-90 166 925)">madera + acrílico</text>
+    <!-- sombra del monitor -->
+    <polygon points="146,770 470,800 470,935 146,880" fill="#cc3333" fill-opacity="0.07"/>
+    <text x="300" y="905" text-anchor="middle" font-size="11" fill="#b55">sombra del monitor</text>
+
+    <!-- antena del dongle por encima -->
+    <line x1="140" y1="757" x2="140" y2="722" stroke="#22aa55" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="140" cy="760" r="4" fill="#22aa55"/>
+    <text x="172" y="705" font-size="12" fill="#14512f" font-weight="bold">✔ antena del dongle USB</text>
+    <text x="172" y="719" font-size="11" fill="#14512f">afuera de la tapa, parada, con vista a la cancha</text>
+
+    <!-- jugadores -->
+    <g fill="#c8c8c8">
+      <circle cx="470" cy="823" r="11"/><rect x="458" y="836" width="24" height="70" rx="8"/>
+      <circle cx="510" cy="828" r="10"/><rect x="499" y="840" width="22" height="66" rx="8"/>
+    </g>
+    <text x="490" y="924" text-anchor="middle" font-size="11" fill="#888">jugadores (absorben)</text>
+
+    <!-- reja -->
+    <line x1="790" y1="770" x2="790" y2="935" stroke="#888" stroke-width="4" stroke-dasharray="3 3"/>
+    <text x="782" y="790" text-anchor="end" font-size="11" fill="#666">borde de la reja</text>
+    <text x="790" y="952" text-anchor="middle" font-size="11" fill="#666">reja metálica</text>
+    <!-- caja MAL: pegada a la reja, abajo -->
+    <rect x="796" y="845" width="44" height="58" rx="5" fill="#fff" stroke="#b33" stroke-width="2"/>
+    <rect x="812" y="852" width="12" height="38" fill="#b33"/>
+    <text x="848" y="866" font-size="11" fill="#a02020">✘ pegada a la reja,</text>
+    <text x="848" y="880" font-size="11" fill="#a02020">debajo del borde</text>
+    <!-- caja BIEN: separada y con la antena sobre el borde -->
+    <rect x="856" y="712" width="48" height="66" rx="5" fill="#fff" stroke="#22aa55" stroke-width="2"/>
+    <rect x="874" y="720" width="12" height="40" fill="#22aa55"/>
+    <polygon points="874,720 886,720 880,710" fill="#22aa55"/>
+    <line x1="794" y1="772" x2="852" y2="772" stroke="#22aa55" stroke-width="1.5" marker-end="url(#flecha)"/>
+    <text x="823" y="790" text-anchor="middle" font-size="10" fill="#14512f">≥ 10–15 cm</text>
+    <text x="912" y="728" font-size="11" fill="#14512f" font-weight="bold">✔ antena por</text>
+    <text x="912" y="742" font-size="11" fill="#14512f" font-weight="bold">encima del borde</text>
+    <text x="912" y="756" font-size="11" fill="#14512f">y lejos de la reja</text>
+
+    <!-- caminos -->
+    <line x1="146" y1="740" x2="852" y2="742" stroke="#22aa55" stroke-width="2.5" stroke-dasharray="9 6"/>
+    <text x="500" y="760" text-anchor="middle" font-size="12" fill="#14512f">camino libre, por encima de las cabezas</text>
+    <line x1="122" y1="815" x2="796" y2="872" stroke="#cc3333" stroke-width="2" stroke-dasharray="4 5"/>
+    <text x="640" y="815" text-anchor="middle" font-size="12" fill="#a02020">monitor + pared + reja + gente:</text>
+    <text x="640" y="830" text-anchor="middle" font-size="12" fill="#a02020">−77 a −87 dBm medidos en partidos</text>
+  </g>
+
   <!-- ============ NOTAS ============ -->
   <g>
-    <rect x="30" y="650" width="980" height="185" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1.5"/>
-    <text x="52" y="680" font-size="16" font-weight="bold" fill="#333">Dónde está la antena en cada placa</text>
+    <rect x="30" y="985" width="980" height="185" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1.5"/>
+    <text x="52" y="1015" font-size="16" font-weight="bold" fill="#333">Dónde está la antena en cada placa</text>
 
-    <text x="52" y="708" font-size="13" fill="#444">
-      <tspan font-weight="bold">Wemos D1 Mini:</tspan> el borde opuesto al conector USB. Se ve el serpenteo de cobre impreso, sin componentes alrededor.
+    <text x="52" y="1043" font-size="13" fill="#444">
+      <tspan font-weight="bold">NodeMCU v3 LOLIN:</tspan> el zigzag de cobre del módulo ESP-12 (la chapita con «Wi-Fi»), en el extremo opuesto al USB.
     </text>
-    <text x="52" y="730" font-size="13" fill="#444">
-      <tspan font-weight="bold">Pi Zero W:</tspan> la esquina con la zona triangular despejada, junto a la ranura de la microSD. No tiene componentes encima.
+    <text x="52" y="1065" font-size="13" fill="#444">
+      <tspan font-weight="bold">Pi Zero 2 W:</tspan> la zona de la placa sin nada soldado encima, junto a la ranura de la microSD: es la antena impresa.
     </text>
 
-    <text x="52" y="764" font-size="16" font-weight="bold" fill="#333">Lo que arruina todo, sin importar la orientación</text>
-    <text x="52" y="790" font-size="13" fill="#444">
-      • <tspan font-weight="bold">Metal a menos de 2 cm de la antena.</tspan> El chasis del monitor es el sospechoso nº 1: alejá la Pi todo lo que puedas.
+    <text x="52" y="1099" font-size="16" font-weight="bold" fill="#333">Lo que arruina todo, sin importar la orientación</text>
+    <text x="52" y="1125" font-size="13" fill="#444">
+      • <tspan font-weight="bold">Metal entre los dos equipos o pegado a una antena:</tspan> el chasis del monitor y la reja. Alejate de los dos, o pasá por encima.
     </text>
-    <text x="52" y="812" font-size="13" fill="#444">
-      • <tspan font-weight="bold">Caja estanca metálica.</tspan> Es una jaula de Faraday: ninguna orientación la salva. Tiene que ser de plástico.
+    <text x="52" y="1147" font-size="13" fill="#444">
+      • <tspan font-weight="bold">Caja metálica, o un powerbank pegado a la antena:</tspan> ninguna orientación lo salva. Caja de plástico y la batería abajo.
     </text>
-    <text x="52" y="828" font-size="12" fill="#777">
-      El policarbonato del frente no molesta: cuesta 1 o 2 dB. Cables o tornillos cruzando sobre la antena, sí.
+    <text x="52" y="1163" font-size="12" fill="#777">
+      La madera seca y el acrílico casi no molestan (1 a 3 dB). Medí cada cambio en /senal: la meta es −70 dBm o mejor.
     </text>
   </g>
 </svg>

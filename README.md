@@ -30,6 +30,7 @@ Dejo aquí el código del proyecto para quien quiera replicarlo en otras canchas
 ├── splash.service               # Servicio systemd del cartel
 ├── setup-splash.sh              # Silencia el log de arranque (una sola vez)
 ├── setup-pantalla.sh            # Fija la resolución del monitor (una sola vez)
+├── setup-reloj.sh               # Activa el módulo de reloj DS3231 (una sola vez)
 ├── deploy.sh                    # Despliega a la Raspberry y reinicia el servicio
 ├── backup-firmware.sh           # Vuelca la flash del ESP antes de reflashear
 ├── medir-senal.sh               # Mide el RSSI del control a lo largo de la cancha

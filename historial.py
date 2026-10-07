@@ -134,12 +134,14 @@ class Historial:
     @staticmethod
     def _base(e):
         """Hora de pared del instante del encendido (m = 0), y si es
-        confiable. Una puesta en hora desde el celular manda sobre todo; si
-        no hubo, se usa la mejor estimación disponible."""
-        celular = [r for r in e['relojes'] if r[2] == 'celular']
-        if celular:
-            m, despues, _ = celular[-1]
-            return despues - m, True
+        confiable. Una puesta en hora desde el celular manda sobre todo;
+        después, la hora del módulo de reloj (rtc) al arrancar; si no hubo
+        ninguna, se usa la mejor estimación disponible."""
+        for fuente in ('celular', 'rtc'):
+            confiables = [r for r in e['relojes'] if r[2] == fuente]
+            if confiables:
+                m, despues, _ = confiables[-1]
+                return despues - m, True
         if e['relojes']:
             m, despues, _ = e['relojes'][-1]
             return despues - m, False

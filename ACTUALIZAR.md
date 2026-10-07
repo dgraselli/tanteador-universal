@@ -176,6 +176,29 @@ borra el `video=...` del final.
 `./setup-splash.sh --revertir` restaura una copia de `cmdline.txt` anterior a
 este cambio: después de usarlo, volvé a correr `setup-pantalla.sh`.
 
+### Reloj con pila (DS3231)
+
+La Pi no tiene reloj propio ni internet. Un módulo DS3231 con pila en los
+pines 17 (3,3 V), 20 (GND), 3 (SDA) y 5 (SCL) le da la hora en cada arranque,
+aunque nadie se conecte. Se activa una sola vez:
+
+```bash
+./setup-reloj.sh
+ssh chaca@192.168.216.1 'sudo reboot'
+```
+
+Activa I2C y el reloj en `config.txt` (copia en `config.txt.antes-del-reloj`)
+y le da permiso a `pruebas.py` para grabar en el módulo la hora que manda el
+celular. Al arrancar, el kernel copia la hora del módulo al sistema y la
+bitácora la anota como `reloj` con fuente `rtc`: el historial ya no la marca
+con ≈. Alimentalo con 3,3 V: con 5 V, el ZS-042 carga la pila, y una CR2032
+común se hincha. Se vuelve atrás con `./setup-reloj.sh --revertir`.
+
+De paso deja la Pi en hora de Argentina (`America/Argentina/Buenos_Aires`),
+para que `date` y `journalctl` no salgan en hora de Londres. La bitácora no
+cambia: guarda instantes UTC, y `/historial` los muestra en la hora local de
+quien abre la página.
+
 ---
 
 ## Actualizar el control remoto (ESP8266)

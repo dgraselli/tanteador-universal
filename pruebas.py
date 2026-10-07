@@ -10,6 +10,7 @@
 #   - Chicharra: pulso en el GPIO, sin audio. Prueba el ruido eléctrico
 #     del módulo MOSFET/relé por separado.
 
+import fcntl
 import io
 import json
 import math
@@ -266,10 +267,41 @@ def _vigilar():
             proxima_salud += 60
             REGISTRO.anotar('salud', **_salud())
 
-# La Pi arranca con una hora vieja (no tiene reloj ni internet). Se pone en
-# hora sola en cuanto un celular abre cualquiera de las páginas: el JS manda
-# la hora del teléfono a /reloj. Requiere CAP_SYS_TIME (ver pruebas.service).
+# La Pi no tiene internet. La hora sale del módulo de reloj DS3231 (pila
+# propia; ver setup-reloj.sh): el kernel la copia al sistema al arrancar.
+# Además se corrige sola cuando un celular abre cualquiera de las páginas: el
+# JS manda la hora del teléfono a /reloj, y esa hora se graba también en el
+# módulo. Requiere CAP_SYS_TIME (ver pruebas.service).
 _reloj = {'confirmado': False}
+
+RTC = '/dev/rtc0'
+# Antes de esto, la hora es la de fábrica del módulo (año 2000, pila agotada)
+# o una hora rota: no se le cree.
+HORA_MINIMA = 1767225600  # 2026-01-01
+
+def _leer_rtc():
+    """Segundos epoch del módulo de reloj, o None si no está o no es válida."""
+    try:
+        with open('/sys/class/rtc/rtc0/since_epoch') as f:
+            epoch = int(f.read())
+    except (OSError, ValueError):
+        return None   # sin módulo, o el chip avisa que se detuvo
+    return epoch if epoch >= HORA_MINIMA else None
+
+def _guardar_en_rtc(epoch):
+    """Graba la hora en el módulo (ioctl RTC_SET_TIME). Si falla, solo avisa:
+    el reloj del sistema ya quedó bien."""
+    t = time.gmtime(epoch)
+    datos = struct.pack('9i', t.tm_sec, t.tm_min, t.tm_hour, t.tm_mday,
+                        t.tm_mon - 1, t.tm_year - 1900, 0, 0, 0)
+    try:
+        fd = os.open(RTC, os.O_WRONLY)
+        try:
+            fcntl.ioctl(fd, 0x4024700a, datos)  # RTC_SET_TIME
+        finally:
+            os.close(fd)
+    except OSError as e:
+        print(f"No pude grabar la hora en el módulo de reloj ({e})", flush=True)
 
 def _poner_en_hora(epoch, fuente):
     antes = time.time()
@@ -279,18 +311,26 @@ def _poner_en_hora(epoch, fuente):
 
 def reloj_desde_celular(epoch):
     # Un teléfono con la fecha rota no puede mandar el tablero al pasado.
-    if epoch < 1767225600:  # 2026-01-01
+    if epoch < HORA_MINIMA:
         return 'hora del celular inválida'
     with SENAL.lock:
         if _reloj['confirmado'] and abs(epoch - time.time()) < 30:
             return 'ya estaba en hora'
         _poner_en_hora(epoch, 'celular')
+        _guardar_en_rtc(epoch)
         _reloj['confirmado'] = True
     return 'puesta en hora'
 
 def reloj_al_arrancar():
-    """Sin celular, al menos que la hora no vaya para atrás respecto de lo
-    último anotado: así el historial queda en orden. Es aproximada."""
+    """Con el módulo de reloj en hora, el kernel ya puso el sistema en hora:
+    solo se anota, para que el historial tome este encendido como confiable.
+    Sin módulo (o con la pila agotada), al menos que la hora no vaya para
+    atrás respecto de lo último anotado: así el historial queda en orden. Es
+    aproximada."""
+    if _leer_rtc() is not None and time.time() >= HORA_MINIMA:
+        ahora = round(time.time(), 3)
+        REGISTRO.anotar('reloj', antes=ahora, despues=ahora, fuente='rtc')
+        return
     ultimo = ultimo_ts()
     if ultimo and time.time() < ultimo:
         try:
